@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sale Daily – Team 06</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a2b4a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sale Daily" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --navy: #1a2b4a;
+      --navy-dark: #0f1c32;
+      --navy-light: #2a3f6a;
+      --orange: #f57c20;
+      --orange-light: #ff9a45;
+      --orange-dark: #d96910;
+      --cream: #fdf6ee;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 2px 16px rgba(26,43,74,0.10);
+      --shadow-md: 0 4px 24px rgba(26,43,74,0.15);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      line-height: 1.6;
+      min-height: 100dvh;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--navy);
+      color: white;
+      padding: 0 16px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .topbar-title span { color: var(--orange-light); }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .badge-role {
+      background: var(--orange);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+      transition: background 0.15s;
+    }
+    .btn-icon:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── PAGE ROUTING ── */
+    .page { display: none; padding: 16px; padding-bottom: 32px; max-width: 600px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--navy-dark);
+      display: flex;
+      z-index: 100;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
+      color: var(--gray-400);
+      cursor: pointer;
+      border: none;
+      background: none;
+      min-height: 56px;
+      font-size: 10px;
+      font-weight: 500;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--orange-light); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-badge {
+      background: var(--orange);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 5px;
+      position: absolute;
+      top: 4px;
+      right: calc(50% - 18px);
+    }
+    .nav-item-wrap { position: relative; }
+    body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+
+    /* ── CARDS ── */
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+    .section-title:first-child { margin-top: 8px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      min-height: 44px;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--orange); color: white; }
+    .btn-primary:active { background: var(--orange-dark); transform: scale(0.98); }
+    .btn-secondary { background: var(--navy); color: white; }
+    .btn-secondary:active { background: var(--navy-dark); transform: scale(0.98); }
+    .btn-ghost { background: var(--gray-100); color: var(--gray-700); }
+    .btn-ghost:active { background: var(--gray-200); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 7px 12px; font-size: 13px; min-height: 36px; }
+    .btn-full { width: 100%; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── FORMS ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .form-label .required { color: var(--danger); margin-left: 2px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--gray-900);
+      background: white;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-height: 44px;
+    }
+    .form-textarea { min-height: 90px; resize: vertical; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(245,124,32,0.12);
+    }
+    .form-hint { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+    .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; display: none; }
+    .form-error.visible { display: block; }
+
+    /* ── MEMBER AVATAR ── */
+    .avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+    .avatar-sm { width: 30px; height: 30px; font-size: 11px; }
+    .avatar-lg { width: 52px; height: 52px; font-size: 16px; }
+
+    /* ── MEMBER ROW ── */
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: white;
+    }
+    .member-row:active { background: var(--gray-50); }
+    .member-row.has-task { border-color: var(--orange); background: #fff8f0; }
+    .member-row.submitted { border-color: var(--success); background: #f0fdf4; }
+    .member-info { flex: 1; min-width: 0; }
+    .member-name { font-size: 15px; font-weight: 700; color: var(--navy); }
+    .member-role { font-size: 12px; color: var(--gray-500); }
+    .member-status { flex-shrink: 0; }
+
+    /* ── STATUS PILL ── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill-orange { background: #fff0e0; color: var(--orange-dark); }
+    .pill-green { background: #dcfce7; color: #15803d; }
+    .pill-gray { background: var(--gray-100); color: var(--gray-500); }
+    .pill-red { background: #fee2e2; color: #b91c1c; }
+    .pill-navy { background: #e8edf5; color: var(--navy); }
+
+    /* ── PRIORITY ── */
+    .priority-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .p-cao { background: var(--danger); }
+    .p-tb { background: var(--orange); }
+    .p-thap { background: var(--success); }
+
+    /* ── TASK ITEM ── */
+    .task-item {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 8px;
+      background: white;
+    }
+    .task-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .task-title { font-size: 14px; font-weight: 600; color: var(--gray-900); flex: 1; }
+    .task-desc { font-size: 13px; color: var(--gray-500); line-height: 1.5; }
+    .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+    /* ── DATE DISPLAY ── */
+    .date-bar {
+      background: var(--navy);
+      color: white;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .date-bar-date { font-size: 14px; font-weight: 700; }
+    .date-bar-time { font-size: 13px; color: var(--gray-400); }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      border-radius: var(--radius-sm);
+      background: var(--gray-100);
+      padding: 3px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      flex: 1;
+      padding: 9px 8px;
+      border-radius: 7px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .tab.active { background: white; color: var(--navy); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
+    /* ── PROGRESS ── */
+    .progress-bar {
+      height: 6px;
+      background: var(--gray-200);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange), var(--orange-light));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .stat-num { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+    .stat-card.orange .stat-num { color: var(--orange); }
+    .stat-card.green .stat-num { color: var(--success); }
+
+    /* ── REPORT FORM ── */
+    .report-section {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+      background: white;
+    }
+    .report-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,28,50,0.55);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 16px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 92dvh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+    .modal-overlay.active .modal { transform: translateY(0); }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--gray-200);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    .modal-title { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 16px; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--gray-100); border: none; cursor: pointer;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--gray-500);
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--navy-dark);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 300;
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { background: var(--success); }
+    #toast.error { background: var(--danger); }
+
+    /* ── LOGIN / MEMBER SELECT ── */
+    #page-login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100dvh - 56px);
+      padding: 24px 16px;
+    }
+    .login-logo {
+      width: 72px; height: 72px;
+      background: var(--orange);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(245,124,32,0.35);
+    }
+    .login-title { font-size: 22px; font-weight: 800; color: var(--navy); margin-bottom: 6px; text-align: center; }
+    .login-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 32px; text-align: center; }
+    .login-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 20px; width: 100%; max-width: 380px; }
+    .member-pick-list { list-style: none; }
+    .member-pick-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 8px;
+      background: white;
+      transition: all 0.15s;
+    }
+    .member-pick-item:active { background: var(--gray-50); border-color: var(--orange); }
+    .member-pick-name { font-size: 15px; font-weight: 700; color: var(--navy); }
+    .member-pick-role { font-size: 12px; color: var(--gray-500); }
+    .divider { text-align: center; color: var(--gray-400); font-size: 12px; margin: 12px 0; position: relative; }
+    .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--gray-200); }
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+
+    /* ── HERO BANNER ── */
+    .hero-banner {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      border-radius: var(--radius);
+      padding: 20px;
+      color: white;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute; top: -20px; right: -20px;
+      width: 100px; height: 100px;
+      background: rgba(245,124,32,0.18);
+      border-radius: 50%;
+    }
+    .hero-greeting { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .hero-name { font-size: 20px; font-weight: 800; margin: 2px 0 8px; }
+    .hero-date { font-size: 13px; color: rgba(255,255,255,0.65); }
+
+    /* ── REVIEW CARD ── */
+    .review-card {
+      border-radius: var(--radius);
+      border: 1.5px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 12px;
+      background: white;
+      box-shadow: var(--shadow);
+    }
+    .review-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .review-body { padding: 14px; }
+    .review-field { margin-bottom: 12px; }
+    .review-field-label { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .review-field-value { font-size: 14px; color: var(--gray-700); line-height: 1.5; }
+    .feedback-box {
+      background: #fff8f0;
+      border: 1.5px solid var(--orange);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .feedback-box-label { font-size: 12px; font-weight: 700; color: var(--orange-dark); margin-bottom: 6px; }
+
+    /* ── CHECKLIST ── */
+    .check-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px; height: 20px;
+      border: 2px solid var(--gray-300);
+      border-radius: 5px;
+      flex-shrink: 0; margin-top: 1px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .check-box.checked { background: var(--orange); border-color: var(--orange); }
+    .check-box.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; }
+    .check-text { font-size: 14px; color: var(--gray-700); flex: 1; line-height: 1.5; }
+    .check-text.done { text-decoration: line-through; color: var(--gray-400); }
+
+    /* ── TELEGRAM SETUP ── */
+    .tg-box {
+      background: #e8f4fd;
+      border: 1.5px solid #2e9af3;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .tg-box-title { font-size: 13px; font-weight: 700; color: #1a6fa8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--gray-700); margin-bottom: 6px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── UTILITY ── */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-4 { margin-top: 4px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-12 { margin-bottom: 12px; }
+    .text-sm { font-size: 13px; }
+    .text-xs { font-size: 12px; }
+    .font-bold { font-weight: 700; }
+    .text-navy { color: var(--navy); }
+    .text-orange { color: var(--orange); }
+    .text-gray { color: var(--gray-500); }
+    .text-success { color: var(--success); }
+    .hr { border: none; border-top: 1px solid var(--gray-100); margin: 12px 0; }
+
+    @media (max-width: 360px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stat-num { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar" id="topbar">
+  <div class="topbar-title">Sales <span>Daily</span></div>
+  <div class="topbar-right">
+    <span class="badge-role" id="role-badge" style="display:none"></span>
+    <button class="btn-icon" onclick="logout()" title="Đổi người dùng" id="btn-logout" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div id="page-login">
+  <div class="login-logo">📊</div>
+  <div class="login-title">Quản Lý Sale Hàng Ngày</div>
+  <div class="login-sub">Chọn vai trò của bạn để tiếp tục</div>
+  <div class="login-card">
+    <p class="form-label" style="text-align:center; font-size:14px; margin-bottom:12px;">Bạn là ai?</p>
+    <button class="btn btn-secondary btn-full mb-8" onclick="loginAs('manager')" style="font-size:15px; padding:14px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Quản Lý / Leader
+    </button>
+    <div class="divider">hoặc chọn thành viên</div>
+    <ul class="member-pick-list" id="member-pick-list"></ul>
+  </div>
+</div>
+
+<!-- ===== MANAGER PAGES ===== -->
+<!-- MANAGER: HOME / GIAO VIỆC -->
+<div class="page" id="page-mgr-home">
+  <div id="mgr-date-bar"></div>
+
+  <div class="stats-grid" id="mgr-stats"></div>
+
+  <p class="section-title">Tiến độ hôm nay</p>
+  <div class="card" style="padding:14px;">
+    <div id="mgr-progress-list"></div>
+  </div>
+
+  <p class="section-title">Nhóm Sale</p>
+  <div id="mgr-member-list"></div>
+
+  <button class="btn btn-primary btn-full mt-12" onclick="openAssignModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Giao Việc Hôm Nay
+  </button>
+</div>
+
+<!-- MANAGER: REVIEW CUOI NGAY -->
+<div class="page" id="page-mgr-review">
+  <div id="review-date-bar"></div>
+  <div class="tabs" id="review-tabs">
+    <button class="tab active" onclick="switchReviewTab('all')">Tất Cả</button>
+    <button class="tab" onclick="switchReviewTab('submitted')">Đã Báo Cáo</button>
+    <button class="tab" onclick="switchReviewTab('pending')">Chưa Báo Cáo</button>
+  </div>
+  <div id="review-list"></div>
+</div>
+
+<!-- MANAGER: CÀI ĐẶT / TELEGRAM -->
+<div class="page" id="page-mgr-settings">
+  <p class="section-title">Thông Báo Telegram</p>
+  <div class="tg-box">
+    <div class="tg-box-title">
+      <svg viewBox="0 0 24 24" fill="#2e9af3" width="16" height="16"><path d="M21.2 5L2 10.5l6.5 2.5L21.2 5zM8.5 13l1.5 5.5 3-3.5L18 19l3.2-14L8.5 13z"/></svg>
+      Hướng dẫn cài Telegram Bot
+    </div>
+    <p style="font-size:13px; color:#1a6fa8; line-height:1.6;">
+      1. Tạo bot qua <strong>@BotFather</strong> → lấy <strong>BOT TOKEN</strong><br>
+      2. Chat với bot rồi gửi <code>/start</code><br>
+      3. Vào <strong>@userinfobot</strong> để lấy <strong>CHAT ID</strong> của mỗi người<br>
+      4. Điền thông tin bên dưới → Lưu → Dùng nút gửi thủ công hoặc để app tự nhắc
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title mb-8">Bot Token</div>
+    <div class="form-group">
+      <label class="form-label">Telegram Bot Token</label>
+      <input class="form-input" type="text" id="tg-token" placeholder="1234567890:ABCdef..." />
+    </div>
+  </div>
+
+  <p class="section-title">Chat ID từng thành viên</p>
+  <div class="card" id="tg-chat-ids"></div>
+
+  <button class="btn btn-primary btn-full mt-12" onclick="saveTgSettings()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Lưu Cài Đặt
+  </button>
+
+  <p class="section-title">Gửi thông báo thủ công</p>
+  <div class="card">
+    <p class="text-sm text-gray mb-8">Nhấn để gửi ngay, không cần đợi lịch tự động.</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="sendTgManual('morning')">
+        ☀️ Gửi link công việc
+      </button>
+      <button class="btn btn-ghost" style="flex:1" onclick="sendTgManual('evening')">
+        🌙 Nhắc báo cáo
+      </button>
+    </div>
+  </div>
+
+  <p class="section-title">Lịch Tự Động</p>
+  <div class="card">
+    <div class="check-item">
+      <div class="check-box" id="auto-morning-check" onclick="toggleAutoSchedule('morning')"></div>
+      <div class="check-text">Tự gửi link công việc lúc <strong>8:30 sáng</strong></div>
+    </div>
+    <div class="check-item">
+      <div class="check-box" id="auto-evening-check" onclick="toggleAutoSchedule('evening')"></div>
+      <div class="check-text">Tự nhắc báo cáo lúc <strong>21:30 tối</strong></div>
+    </div>
+    <p class="text-xs text-gray mt-8">* Lịch tự động chạy khi thiết bị của quản lý đang mở ứng dụng này.</p>
+  </div>
+
+  <p class="section-title">Link cá nhân từng sale</p>
+  <div class="card" id="personal-links"></div>
+
+  <div style="height:8px;"></div>
+  <button class="btn btn-ghost btn-full" onclick="clearAllData()" style="color:var(--danger);">Xóa toàn bộ dữ liệu hôm nay</button>
+</div>
+
+<!-- ===== SALE MEMBER PAGES ===== -->
+<!-- SALE: CÔNG VIỆC -->
+<div class="page" id="page-sale-tasks">
+  <div id="sale-hero"></div>
+  <div id="sale-task-list"></div>
+</div>
+
+<!-- SALE: BÁO CÁO -->
+<div class="page" id="page-sale-report">
+  <div id="sale-report-hero"></div>
+  <div id="sale-report-content"></div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <!-- Manager nav -->
+  <div id="nav-mgr" style="display:contents">
+    <button class="nav-item active" id="nav-mgr-home" onclick="showPage('mgr-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Tổng Quan
+    </button>
+    <button class="nav-item" id="nav-mgr-review" onclick="showPage('mgr-review')">
+      <div class="nav-item-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span id="nav-badge-review" class="nav-badge" style="display:none">0</span>
+      </div>
+      Báo Cáo
+    </button>
+    <button class="nav-item" id="nav-mgr-settings" onclick="showPage('mgr-settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Cài Đặt
+    </button>
+  </div>
+  <!-- Sale nav -->
+  <div id="nav-sale" style="display:contents; display:none">
+    <button class="nav-item active" id="nav-sale-tasks" onclick="showPage('sale-tasks')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Việc Của Tôi
+    </button>
+    <button class="nav-item" id="nav-sale-report" onclick="showPage('sale-report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Báo Cáo
+    </button>
+  </div>
+</nav>
+
+<!-- ===== MODAL: GIAO VIỆC ===== -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal" style="position:relative;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-assign')">✕</button>
+    <div class="modal-title" id="modal-assign-title">Giao Việc</div>
+
+    <div class="form-group">
+      <label class="form-label">Thành viên <span class="required">*</span></label>
+      <select class="form-select" id="assign-member"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tiêu đề công việc <span class="required">*</span></label>
+      <input class="form-input" type="text" id="assign-title" placeholder="VD: Gọi điện 20 khách hàng mới" />
+      <div class="form-error" id="err-assign-title">Vui lòng nhập tiêu đề</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mô tả / Hướng dẫn</label>
+      <textarea class="form-textarea" id="assign-desc" placeholder="Hướng dẫn chi tiết, lưu ý cho sale..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mục tiêu</label>
+      <input class="form-input" type="text" id="assign-target" placeholder="VD: 20 cuộc gọi, 3 hợp đồng..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Độ ưu tiên</label>
+      <select class="form-select" id="assign-priority">
+        <option value="cao">Cao</option>
+        <option value="trung-binh" selected>Trung bình</option>
+        <option value="thap">Thấp</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-assign')">Hủy</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveTask()">Giao Việc</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: FEEDBACK REVIEW ===== -->
+<div class="modal-overlay" id="modal-feedback">
+  <div class="modal" style="position:relative;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-feedback')">✕</button>
+    <div class="modal-title" id="modal-feedback-title">Nhận xét</div>
+    <div id="modal-feedback-report"></div>
+    <div class="form-group mt-12">
+      <label class="form-label">Nhận xét của Leader</label>
+      <textarea class="form-textarea" id="feedback-text" placeholder="Nhận xét, góp ý, khen ngợi..."></textarea>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-feedback')">Hủy</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveFeedback()">Lưu Nhận Xét</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────
+const MEMBERS = [
+  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale-cuong', roleLabel: 'Sale Cứng',  color: '#1a2b4a' },
+  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale-cuong', roleLabel: 'Sale Cứng',  color: '#2a3f6a' },
+  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#f57c20' },
+  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#d96910' },
+  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#c25c08' },
+];
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+function getStore() {
+  return JSON.parse(localStorage.getItem('dsm_data') || '{}');
+}
+function setStore(data) {
+  localStorage.setItem('dsm_data', JSON.stringify(data));
+}
+function getTodayData() {
+  const store = getStore();
+  const key = todayKey();
+  if (!store[key]) store[key] = { tasks: {}, reports: {}, feedbacks: {} };
+  return { store, key, day: store[key] };
+}
+function saveTodayData(store, key, day) {
+  store[key] = day;
+  setStore(store);
+}
+
+// session
+let currentUser = null; // { id, name, role, ... } or { id: 'manager', name: 'Quản Lý', role: 'manager' }
+
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem('dsm_session')); } catch { return null; }
+}
+function setSession(user) {
+  sessionStorage.setItem('dsm_session', JSON.stringify(user));
+}
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function initials(name) {
+  return name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
+}
+function formatDate(d) {
+  const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+  return `${days[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+function formatTime(d) {
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
+function priorityPill(p) {
+  const map = { cao: ['Cao','pill-red'], 'trung-binh': ['Trung bình','pill-orange'], thap: ['Thấp','pill-green'] };
+  const [label, cls] = map[p] || ['Trung bình','pill-orange'];
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+function priorityDotClass(p) {
+  return { cao: 'p-cao', 'trung-binh': 'p-tb', thap: 'p-thap' }[p] || 'p-tb';
+}
+function memberById(id) { return MEMBERS.find(m => m.id === id); }
+
+// toast
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// modal
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ─────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────
+function buildLoginPage() {
+  const list = document.getElementById('member-pick-list');
+  list.innerHTML = MEMBERS.map(m => `
+    <li class="member-pick-item" onclick="loginAs('${m.id}')">
+      <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
+      <div>
+        <div class="member-pick-name">${m.name}</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+    </li>
+  `).join('');
+}
+
+function loginAs(userId) {
+  if (userId === 'manager') {
+    currentUser = { id: 'manager', name: 'Quản Lý', role: 'manager' };
+  } else {
+    currentUser = memberById(userId);
+  }
+  setSession(currentUser);
+  enterApp();
+}
+
+function logout() {
+  sessionStorage.removeItem('dsm_session');
+  currentUser = null;
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('btn-logout').style.display = 'none';
+  document.getElementById('role-badge').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-login').style.display = 'flex';
+}
+
+function enterApp() {
+  document.getElementById('page-login').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  document.getElementById('btn-logout').style.display = 'flex';
+  document.getElementById('role-badge').style.display = 'inline-flex';
+
+  if (currentUser.role === 'manager') {
+    document.getElementById('role-badge').textContent = 'Leader';
+    document.getElementById('nav-mgr').style.display = 'contents';
+    document.getElementById('nav-sale').style.display = 'none';
+    buildManagerHome();
+    buildManagerReview();
+    buildManagerSettings();
+    showPage('mgr-home');
+  } else {
+    document.getElementById('role-badge').textContent = 'Sale';
+    document.getElementById('nav-mgr').style.display = 'none';
+    document.getElementById('nav-sale').style.display = 'contents';
+    buildSaleTasks();
+    buildSaleReport();
+    showPage('sale-tasks');
+  }
+}
+
+// ─────────────────────────────────────────
+// PAGE NAVIGATION
+// ─────────────────────────────────────────
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId)?.classList.add('active');
+
+  // update nav active
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + pageId)?.classList.add('active');
+
+  // refresh content
+  if (pageId === 'mgr-home') buildManagerHome();
+  if (pageId === 'mgr-review') buildManagerReview();
+  if (pageId === 'mgr-settings') buildManagerSettings();
+  if (pageId === 'sale-tasks') buildSaleTasks();
+  if (pageId === 'sale-report') buildSaleReport();
+}
+
+// ─────────────────────────────────────────
+// MANAGER: HOME
+// ─────────────────────────────────────────
+function buildManagerHome() {
+  const now = new Date();
+  const { day } = getTodayData();
+
+  // date bar
+  document.getElementById('mgr-date-bar').innerHTML = `
+    <div class="date-bar">
+      <div class="date-bar-date">${formatDate(now)}</div>
+      <div class="date-bar-time">${formatTime(now)}</div>
+    </div>`;
+
+  // stats
+  const totalTasks = MEMBERS.reduce((n, m) => n + (day.tasks[m.id]?.length || 0), 0);
+  const totalReports = MEMBERS.filter(m => day.reports[m.id]).length;
+  document.getElementById('mgr-stats').innerHTML = `
+    <div class="stat-card orange"><div class="stat-num">${totalTasks}</div><div class="stat-label">Việc đã giao</div></div>
+    <div class="stat-card green"><div class="stat-num">${totalReports}/${MEMBERS.length}</div><div class="stat-label">Báo cáo nộp</div></div>`;
+
+  // progress list
+  document.getElementById('mgr-progress-list').innerHTML = MEMBERS.map(m => {
+    const tasks = day.tasks[m.id] || [];
+    const done = tasks.filter(t => t.done).length;
+    const pct = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+    return `
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <div class="avatar avatar-sm" style="background:${m.color}">${initials(m.name)}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:700; color:var(--navy)">${m.name}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--orange); width:36px; text-align:right;">${pct}%</div>
+      </div>`;
+  }).join('');
+
+  // member list
+  document.getElementById('mgr-member-list').innerHTML = MEMBERS.map(m => {
+    const tasks = day.tasks[m.id] || [];
+    const hasReport = !!day.reports[m.id];
+    const statusClass = hasReport ? 'submitted' : tasks.length ? 'has-task' : '';
+    const statusPill = hasReport
+      ? '<span class="pill pill-green">Đã báo cáo</span>'
+      : tasks.length
+        ? `<span class="pill pill-orange">${tasks.length} việc</span>`
+        : '<span class="pill pill-gray">Chưa giao</span>';
+    return `
+      <div class="member-row ${statusClass}" onclick="openAssignModal('${m.id}')">
+        <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
+        <div class="member-info">
+          <div class="member-name">${m.name}</div>
+        </div>
+        <div class="member-status">${statusPill}</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────
+// MANAGER: ASSIGN MODAL
+// ─────────────────────────────────────────
+function openAssignModal(memberId) {
+  const sel = document.getElementById('assign-member');
+  sel.innerHTML = MEMBERS.map(m =>
+    `<option value="${m.id}" ${m.id === memberId ? 'selected' : ''}>${m.name}</option>`
+  ).join('');
+  document.getElementById('assign-title').value = '';
+  document.getElementById('assign-desc').value = '';
+  document.getElementById('assign-target').value = '';
+  document.getElementById('assign-priority').value = 'trung-binh';
+  document.getElementById('err-assign-title').classList.remove('visible');
+  openModal('modal-assign');
+}
+
+function saveTask() {
+  const title = document.getElementById('assign-title').value.trim();
+  if (!title) {
+    document.getElementById('err-assign-title').classList.add('visible');
+    return;
+  }
+  const memberId = document.getElementById('assign-member').value;
+  const { store, key, day } = getTodayData();
+  if (!day.tasks[memberId]) day.tasks[memberId] = [];
+  day.tasks[memberId].push({
+    id: Date.now(),
+    title,
+    desc: document.getElementById('assign-desc').value.trim(),
+    target: document.getElementById('assign-target').value.trim(),
+    priority: document.getElementById('assign-priority').value,
+    done: false,
+    createdAt: new Date().toISOString(),
+  });
+  saveTodayData(store, key, day);
+  closeModal('modal-assign');
+  buildManagerHome();
+  toast('Đã giao việc cho ' + memberById(memberId).name, 'success');
+}
+
+// ─────────────────────────────────────────
+// MANAGER: REVIEW
+// ─────────────────────────────────────────
+let reviewTab = 'all';
+function switchReviewTab(tab) {
+  reviewTab = tab;
+  document.querySelectorAll('#review-tabs .tab').forEach((t, i) => {
+    t.classList.toggle('active', ['all','submitted','pending'][i] === tab);
+  });
+  renderReviewList();
+}
+
+function buildManagerReview() {
+  const now = new Date();
+  document.getElementById('review-date-bar').innerHTML = `
+    <div class="date-bar" style="margin-bottom:12px;">
+      <div class="date-bar-date">Báo Cáo – ${formatDate(now)}</div>
+      <div class="date-bar-time">${formatTime(now)}</div>
+    </div>`;
+  renderReviewList();
+  // update badge
+  const { day } = getTodayData();
+  const count = MEMBERS.filter(m => day.reports[m.id] && !day.feedbacks[m.id]).length;
+  const badge = document.getElementById('nav-badge-review');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'block' : 'none';
+}
+
+function renderReviewList() {
+  const { day } = getTodayData();
+  const filtered = MEMBERS.filter(m => {
+    if (reviewTab === 'submitted') return !!day.reports[m.id];
+    if (reviewTab === 'pending') return !day.reports[m.id];
+    return true;
+  });
+
+  if (!filtered.length) {
+    document.getElementById('review-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h3>Không có dữ liệu</h3>
+        <p>Chưa có báo cáo trong danh mục này</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('review-list').innerHTML = filtered.map(m => {
+    const report = day.reports[m.id];
+    const feedback = day.feedbacks[m.id];
+    const tasks = day.tasks[m.id] || [];
+    if (!report) {
+      return `
+        <div class="review-card">
+          <div class="review-header">
+            <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
+            <div style="flex:1"><div style="font-weight:700; color:var(--navy)">${m.name}</div>
+            </div>
+            <span class="pill pill-gray">Chưa báo cáo</span>
+          </div>
+          <div style="padding:12px 14px; font-size:13px; color:var(--gray-500);">
+            Đã giao ${tasks.length} công việc. Chưa có báo cáo.
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="review-card">
+        <div class="review-header">
+          <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
+          <div style="flex:1"><div style="font-weight:700; color:var(--navy)">${m.name}</div>
+          </div>
+          <span class="pill pill-green">Đã nộp</span>
+        </div>
+        <div class="review-body">
+          ${report.results ? `<div class="review-field"><div class="review-field-label">Kết quả đạt được</div><div class="review-field-value">${report.results}</div></div>` : ''}
+          ${report.done_tasks ? `<div class="review-field"><div class="review-field-label">Công việc hoàn thành</div><div class="review-field-value">${report.done_tasks}</div></div>` : ''}
+          ${report.issues ? `<div class="review-field"><div class="review-field-label">Khó khăn / vấn đề</div><div class="review-field-value">${report.issues}</div></div>` : ''}
+          ${report.tomorrow ? `<div class="review-field"><div class="review-field-label">Kế hoạch ngày mai</div><div class="review-field-value">${report.tomorrow}</div></div>` : ''}
+          ${feedback ? `<div class="feedback-box"><div class="feedback-box-label">Nhận xét Leader</div><div style="font-size:14px; color:var(--navy);">${feedback}</div></div>` : ''}
+          <button class="btn btn-ghost btn-sm btn-full mt-8" onclick="openFeedbackModal('${m.id}')">
+            ${feedback ? '✏️ Sửa nhận xét' : '💬 Thêm nhận xét'}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+let feedbackMemberId = null;
+function openFeedbackModal(memberId) {
+  feedbackMemberId = memberId;
+  const m = memberById(memberId);
+  const { day } = getTodayData();
+  document.getElementById('modal-feedback-title').textContent = `Nhận xét – ${m.name}`;
+  document.getElementById('feedback-text').value = day.feedbacks[memberId] || '';
+  // show brief report in modal
+  const report = day.reports[memberId];
+  document.getElementById('modal-feedback-report').innerHTML = report ? `
+    <div style="background:var(--gray-50); border-radius:8px; padding:12px; margin-bottom:4px; font-size:13px; color:var(--gray-700); line-height:1.6;">
+      ${report.results ? `<strong>Kết quả:</strong> ${report.results}<br>` : ''}
+      ${report.issues ? `<strong>Khó khăn:</strong> ${report.issues}<br>` : ''}
+    </div>` : '';
+  openModal('modal-feedback');
+}
+
+function saveFeedback() {
+  const text = document.getElementById('feedback-text').value.trim();
+  const { store, key, day } = getTodayData();
+  day.feedbacks[feedbackMemberId] = text;
+  saveTodayData(store, key, day);
+  closeModal('modal-feedback');
+  buildManagerReview();
+  toast('Đã lưu nhận xét', 'success');
+}
+
+// ─────────────────────────────────────────
+// MANAGER: SETTINGS
+// ─────────────────────────────────────────
+function buildManagerSettings() {
+  const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
+
+  document.getElementById('tg-token').value = cfg.token || '';
+
+  // chat id fields
+  document.getElementById('tg-chat-ids').innerHTML = `
+    <div class="form-group" style="margin-bottom:0">
+      ${MEMBERS.map(m => `
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">
+            <span class="avatar avatar-sm" style="background:${m.color}; display:inline-flex; vertical-align:middle; margin-right:6px; width:22px; height:22px; font-size:10px;">${initials(m.name)}</span>
+            ${m.name}
+          </label>
+          <input class="form-input" type="text" id="tg-id-${m.id}" placeholder="Chat ID Telegram" value="${cfg.chatIds?.[m.id] || ''}" />
+        </div>`).join('')}
+    </div>`;
+
+  // auto schedule checks
+  const auto = JSON.parse(localStorage.getItem('dsm_auto') || '{}');
+  document.getElementById('auto-morning-check').className = 'check-box' + (auto.morning ? ' checked' : '');
+  document.getElementById('auto-evening-check').className = 'check-box' + (auto.evening ? ' checked' : '');
+
+  // personal links
+  const base = window.location.href.split('?')[0];
+  document.getElementById('personal-links').innerHTML = `
+    <p class="text-sm text-gray mb-8">Gửi link này cho từng sale để họ vào đúng trang:</p>
+    ${MEMBERS.map(m => `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div class="avatar avatar-sm" style="background:${m.color}">${initials(m.name)}</div>
+        <div style="flex:1; font-size:13px; color:var(--gray-700); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.name}</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyLink('${m.id}')">Copy</button>
+      </div>`).join('')}`;
+}
+
+function saveTgSettings() {
+  const token = document.getElementById('tg-token').value.trim();
+  const chatIds = {};
+  MEMBERS.forEach(m => {
+    chatIds[m.id] = document.getElementById('tg-id-' + m.id)?.value.trim() || '';
+  });
+  localStorage.setItem('dsm_tg', JSON.stringify({ token, chatIds }));
+  toast('Đã lưu cài đặt Telegram', 'success');
+}
+
+function toggleAutoSchedule(which) {
+  const auto = JSON.parse(localStorage.getItem('dsm_auto') || '{}');
+  auto[which] = !auto[which];
+  localStorage.setItem('dsm_auto', JSON.stringify(auto));
+  buildManagerSettings();
+  toast(auto[which] ? 'Đã bật lịch tự động' : 'Đã tắt lịch tự động');
+}
+
+function copyLink(memberId) {
+  const url = window.location.href.split('?')[0] + '?user=' + memberId;
+  navigator.clipboard.writeText(url).then(() => toast('Đã copy link ' + memberById(memberId).name, 'success')).catch(() => {
+    prompt('Sao chép link:', url);
+  });
+}
+
+function clearAllData() {
+  if (!confirm('Xóa toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
+  const store = getStore();
+  delete store[todayKey()];
+  setStore(store);
+  buildManagerHome();
+  buildManagerReview();
+  toast('Đã xóa dữ liệu hôm nay');
+}
+
+// ─────────────────────────────────────────
+// TELEGRAM
+// ─────────────────────────────────────────
+async function sendTgMessage(token, chatId, text) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+  });
+  return res.ok;
+}
+
+async function sendTgManual(type) {
+  const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
+  if (!cfg.token) { toast('Chưa cài Bot Token', 'error'); return; }
+  const base = window.location.href.split('?')[0];
+  const now = new Date();
+  const dateStr = formatDate(now);
+
+  let sent = 0, failed = 0;
+  for (const m of MEMBERS) {
+    const chatId = cfg.chatIds?.[m.id];
+    if (!chatId) continue;
+    const link = `${base}?user=${m.id}`;
+    let text = '';
+    if (type === 'morning') {
+      const { day } = getTodayData();
+      const tasks = day.tasks[m.id] || [];
+      const taskList = tasks.length
+        ? tasks.map((t, i) => `${i+1}. <b>${t.title}</b>${t.target ? ' – ' + t.target : ''}`).join('\n')
+        : 'Chưa có việc được giao.';
+      text = `☀️ <b>Công việc hôm nay – ${dateStr}</b>\n\nXin chào <b>${m.name}</b>!\n\n${taskList}\n\n🔗 <a href="${link}">Xem chi tiết & cập nhật</a>`;
+    } else {
+      text = `🌙 <b>Nhắc báo cáo cuối ngày</b>\n\nChào <b>${m.name}</b>, đừng quên nộp báo cáo ngày hôm nay nhé!\n\n🔗 <a href="${link}">Nộp báo cáo ngay</a>`;
+    }
+    const ok = await sendTgMessage(cfg.token, chatId, text);
+    ok ? sent++ : failed++;
+  }
+  toast(sent > 0 ? `Đã gửi ${sent} tin nhắn` : 'Gửi thất bại – kiểm tra token/chat ID', sent > 0 ? 'success' : 'error');
+}
+
+// auto schedule check
+function startAutoScheduler() {
+  setInterval(() => {
+    const auto = JSON.parse(localStorage.getItem('dsm_auto') || '{}');
+    if (!auto.morning && !auto.evening) return;
+    if (currentUser?.role !== 'manager') return;
+    const now = new Date();
+    const h = now.getHours(), min = now.getMinutes();
+    const lastSent = JSON.parse(sessionStorage.getItem('dsm_auto_sent') || '{}');
+    const todayStr = todayKey();
+    if (auto.morning && h === 8 && min === 30 && lastSent.morning !== todayStr) {
+      sessionStorage.setItem('dsm_auto_sent', JSON.stringify({ ...lastSent, morning: todayStr }));
+      sendTgManual('morning');
+    }
+    if (auto.evening && h === 21 && min === 30 && lastSent.evening !== todayStr) {
+      sessionStorage.setItem('dsm_auto_sent', JSON.stringify({ ...lastSent, evening: todayStr }));
+      sendTgManual('evening');
+    }
+  }, 30000); // check every 30s
+}
+
+// ─────────────────────────────────────────
+// SALE: TASKS PAGE
+// ─────────────────────────────────────────
+function buildSaleTasks() {
+  if (!currentUser || currentUser.role === 'manager') return;
+  const m = currentUser;
+  const now = new Date();
+  const { day } = getTodayData();
+  const tasks = day.tasks[m.id] || [];
+
+  document.getElementById('sale-hero').innerHTML = `
+    <div class="hero-banner">
+      <div class="hero-greeting">Xin chào,</div>
+      <div class="hero-name">${m.name} 👋</div>
+      <div class="hero-date">${formatDate(now)}</div>
+    </div>`;
+
+  if (!tasks.length) {
+    document.getElementById('sale-task-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <h3>Chưa có việc hôm nay</h3>
+        <p>Leader chưa giao việc. Vui lòng chờ thêm!</p>
+      </div>`;
+    return;
+  }
+
+  const done = tasks.filter(t => t.done).length;
+  document.getElementById('sale-task-list').innerHTML = `
+    <div class="card" style="padding:14px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span class="font-bold text-navy" style="font-size:15px;">Tiến độ: ${done}/${tasks.length}</span>
+        <span class="text-sm text-orange font-bold">${tasks.length ? Math.round(done/tasks.length*100) : 0}%</span>
+      </div>
+      <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${tasks.length ? done/tasks.length*100 : 0}%"></div></div>
+    </div>
+    <p class="section-title">Danh sách công việc</p>
+    ${tasks.map((t, idx) => `
+      <div class="task-item" id="task-item-${idx}">
+        <div class="task-item-header">
+          <div class="check-box ${t.done ? 'checked' : ''}" onclick="toggleTaskDone('${m.id}', ${idx})"></div>
+          <div class="task-title ${t.done ? 'check-text done' : ''}">${t.title}</div>
+        </div>
+        ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
+        <div class="task-meta">
+          ${priorityPill(t.priority)}
+          ${t.target ? `<span class="pill pill-navy">🎯 ${t.target}</span>` : ''}
+        </div>
+      </div>`).join('')}`;
+}
+
+function toggleTaskDone(memberId, idx) {
+  const { store, key, day } = getTodayData();
+  if (!day.tasks[memberId]) return;
+  day.tasks[memberId][idx].done = !day.tasks[memberId][idx].done;
+  saveTodayData(store, key, day);
+  buildSaleTasks();
+}
+
+// ─────────────────────────────────────────
+// SALE: REPORT PAGE
+// ─────────────────────────────────────────
+function buildSaleReport() {
+  if (!currentUser || currentUser.role === 'manager') return;
+  const m = currentUser;
+  const { day } = getTodayData();
+  const existing = day.reports[m.id];
+  const feedback = day.feedbacks[m.id];
+
+  document.getElementById('sale-report-hero').innerHTML = `
+    <div class="hero-banner" style="background:linear-gradient(135deg, #1a4a2b, #2a6a3f);">
+      <div class="hero-greeting">Báo cáo cuối ngày</div>
+      <div class="hero-name">${m.name}</div>
+      <div class="hero-date">${formatDate(new Date())}</div>
+    </div>`;
+
+  if (existing) {
+    // show submitted state
+    document.getElementById('sale-report-content').innerHTML = `
+      <div class="card" style="border:2px solid var(--success);">
+        <div style="text-align:center; padding:8px 0 16px;">
+          <div style="font-size:40px;">✅</div>
+          <div style="font-size:16px; font-weight:800; color:var(--success);">Đã nộp báo cáo!</div>
+          <div style="font-size:13px; color:var(--gray-500); margin-top:4px;">Cảm ơn bạn đã hoàn thành báo cáo hôm nay</div>
+        </div>
+        <hr class="hr">
+        ${existing.results ? `<div class="review-field mb-8"><div class="review-field-label">Kết quả đạt được</div><div class="review-field-value">${existing.results}</div></div>` : ''}
+        ${existing.done_tasks ? `<div class="review-field mb-8"><div class="review-field-label">Hoàn thành</div><div class="review-field-value">${existing.done_tasks}</div></div>` : ''}
+        ${existing.issues ? `<div class="review-field mb-8"><div class="review-field-label">Khó khăn</div><div class="review-field-value">${existing.issues}</div></div>` : ''}
+        ${existing.tomorrow ? `<div class="review-field mb-8"><div class="review-field-label">Ngày mai</div><div class="review-field-value">${existing.tomorrow}</div></div>` : ''}
+        ${feedback ? `
+          <div class="feedback-box mt-12">
+            <div class="feedback-box-label">💬 Nhận xét từ Leader</div>
+            <div style="font-size:14px; color:var(--navy);">${feedback}</div>
+          </div>` : '<div class="text-sm text-gray mt-8" style="text-align:center;">Leader chưa có nhận xét.</div>'}
+        <button class="btn btn-ghost btn-sm btn-full mt-12" onclick="editReport()">✏️ Chỉnh sửa báo cáo</button>
+      </div>`;
+    return;
+  }
+
+  const { day: d2 } = getTodayData();
+  const tasks = d2.tasks[m.id] || [];
+  const doneTasks = tasks.filter(t => t.done).map(t => t.title).join(', ');
+
+  document.getElementById('sale-report-content').innerHTML = `
+    <div class="report-section">
+      <div class="report-section-title">📊 Kết quả đạt được</div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="rpt-results" placeholder="VD: Gọi được 18/20 khách, chốt được 2 hợp đồng..." style="min-height:80px;">${existing?.results || ''}</textarea>
+      </div>
+    </div>
+    <div class="report-section">
+      <div class="report-section-title">✅ Công việc đã hoàn thành</div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="rpt-done" placeholder="Liệt kê các việc đã xong..." style="min-height:70px;">${existing?.done_tasks || doneTasks}</textarea>
+      </div>
+    </div>
+    <div class="report-section">
+      <div class="report-section-title">⚠️ Khó khăn / Vấn đề phát sinh</div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="rpt-issues" placeholder="Gặp khó khăn gì? Cần hỗ trợ gì?" style="min-height:70px;">${existing?.issues || ''}</textarea>
+      </div>
+    </div>
+    <div class="report-section">
+      <div class="report-section-title">📅 Kế hoạch ngày mai</div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="rpt-tomorrow" placeholder="Dự định làm gì ngày mai?" style="min-height:70px;">${existing?.tomorrow || ''}</textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full mt-4" onclick="submitReport()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+      Nộp Báo Cáo
+    </button>`;
+}
+
+function editReport() {
+  const { store, key, day } = getTodayData();
+  delete day.reports[currentUser.id];
+  saveTodayData(store, key, day);
+  buildSaleReport();
+}
+
+function submitReport() {
+  const results = document.getElementById('rpt-results')?.value.trim();
+  const done_tasks = document.getElementById('rpt-done')?.value.trim();
+  const issues = document.getElementById('rpt-issues')?.value.trim();
+  const tomorrow = document.getElementById('rpt-tomorrow')?.value.trim();
+
+  if (!results && !done_tasks) {
+    toast('Vui lòng nhập kết quả hoặc công việc đã hoàn thành', 'error');
+    return;
+  }
+
+  const { store, key, day } = getTodayData();
+  day.reports[currentUser.id] = { results, done_tasks, issues, tomorrow, submittedAt: new Date().toISOString() };
+  saveTodayData(store, key, day);
+  buildSaleReport();
+  toast('Đã nộp báo cáo thành công!', 'success');
+}
+
+// ─────────────────────────────────────────
+// DEEP LINK: ?user=xxx
+// ─────────────────────────────────────────
+function checkDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get('user');
+  if (userId) {
+    const member = memberById(userId);
+    if (member) {
+      loginAs(userId);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildLoginPage();
+
+  // Check deep link first
+  if (checkDeepLink()) return;
+
+  // Restore session
+  const session = getSession();
+  if (session) {
+    currentUser = session;
+    enterApp();
+    return;
+  }
+
+  // Show login
+  document.getElementById('page-login').style.display = 'flex';
+
+  startAutoScheduler();
+});
+
+// Start scheduler after login too
+document.addEventListener('DOMContentLoaded', startAutoScheduler);
+
+// Register Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
