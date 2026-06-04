@@ -2338,86 +2338,222 @@ function getDiaryStore() { return JSON.parse(localStorage.getItem('dsm_diary') |
 function saveDiaryStore(d) { localStorage.setItem('dsm_diary', JSON.stringify(d)); }
 function getLeaderChecklist() { return JSON.parse(localStorage.getItem('dsm_lcheck') || '{}'); }
 function saveLeaderChecklist(d) { localStorage.setItem('dsm_lcheck', JSON.stringify(d)); }
+function getLearningStore() { return JSON.parse(localStorage.getItem('dsm_learn') || '{}'); }
+function saveLearningStore(d) { localStorage.setItem('dsm_learn', JSON.stringify(d)); }
+function getSocialStore() { return JSON.parse(localStorage.getItem('dsm_social') || '{}'); }
+function saveSocialStore(d) { localStorage.setItem('dsm_social', JSON.stringify(d)); }
 
 function buildMgrDiary() {
   const now = new Date();
   const dk = todayKey();
-  const timeStr = formatTime(now);
   const diary = getDiaryStore();
   const lchecks = getLeaderChecklist();
   const todayCheck = lchecks[dk] || {};
   const doneCnt = LEADER_CHECKLIST.filter((_, i) => todayCheck[i]).length;
+  const todayDiary = diary[dk] || {};
+  const learnStore = getLearningStore();
+  const todayLearn = learnStore[dk] || [];
+  const socialStore = getSocialStore();
+  const todaySocial = socialStore[dk] || { limit: 5, checks: [] };
 
-  // Schedule: highlight current time block
+  // ── SCHEDULE (work + learn merged, sorted by time) ──
   const nowMin = now.getHours()*60 + now.getMinutes();
-  const scheduleHtml = LEADER_SCHEDULE.map((s, i) => {
+  const allSlots = [
+    ...LEADER_SCHEDULE.map(s => ({ ...s, type:'work' })),
+    ...todayLearn.map(s => ({ ...s, type:'learn', color:'#0891b2' })),
+  ].sort((a,b) => a.time.localeCompare(b.time));
+
+  const scheduleHtml = allSlots.map((s, i) => {
     const [sh, sm] = s.time.split(':').map(Number);
-    const nextTime = LEADER_SCHEDULE[i+1];
-    const [nh, nm] = nextTime ? nextTime.time.split(':').map(Number) : [23,59];
-    const sMin = sh*60+sm, nMin = nh*60+nm;
-    const isCurrent = nowMin >= sMin && nowMin < nMin;
+    const next = allSlots[i+1];
+    const [nh, nm] = next ? next.time.split(':').map(Number) : [23,59];
+    const isCurrent = nowMin >= sh*60+sm && nowMin < nh*60+nm;
+    const isLearn = s.type === 'learn';
     return `
-      <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--gray-100);
-           ${isCurrent ? 'background:#fff9f0; border-radius:8px; padding:8px 10px; margin:0 -10px; border-bottom:none;' : ''}">
-        <div style="width:44px; flex-shrink:0; font-size:12px; font-weight:700; color:${isCurrent ? s.color : 'var(--gray-400)'}; padding-top:1px;">${s.time}</div>
-        <div style="flex:1; font-size:13px; font-weight:${isCurrent?'700':'400'}; color:${isCurrent ? s.color : 'var(--gray-700)'};">
-          ${isCurrent ? '▶ ' : ''}${s.label}
+      <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 0;
+           border-bottom:${isCurrent?'none':'1px solid var(--gray-100)'};
+           ${isCurrent ? `background:${isLearn?'#f0f9ff':'#fff9f0'}; border-radius:8px; padding:8px 10px; margin:0 -10px;` : ''}">
+        <div style="width:44px; flex-shrink:0; font-size:12px; font-weight:700; color:${isCurrent?s.color:'var(--gray-400)'}; padding-top:1px;">${s.time}</div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${isLearn ? `<span style="font-size:10px; background:#e0f2fe; color:#0891b2; padding:1px 6px; border-radius:10px; font-weight:700;">📚 HỌC</span>` : ''}
+            <span style="font-size:13px; font-weight:${isCurrent?'700':'400'}; color:${isCurrent?s.color:'var(--gray-700)'};">
+              ${isCurrent ? '▶ ' : ''}${s.label}
+            </span>
+          </div>
+          ${s.note ? `<div style="font-size:11px; color:var(--gray-400); margin-top:2px;">${s.note}</div>` : ''}
         </div>
+        ${isLearn ? `<button onclick="deleteLearnSlot('${s.time}', '${dk}')" style="font-size:14px; background:none; border:none; cursor:pointer; color:var(--gray-300);">✕</button>` : ''}
       </div>`;
   }).join('');
 
+  // ── SOCIAL TRACKER ──
+  const checkCount = todaySocial.checks.length;
+  const limit = todaySocial.limit || 5;
+  const overLimit = checkCount >= limit;
+  const lastCheck = todaySocial.checks.at(-1);
+  const lastTime = lastCheck ? new Date(lastCheck).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) : null;
+  const socialBarPct = Math.min(checkCount/limit*100, 100);
+  const socialColor = checkCount === 0 ? '#16a34a' : checkCount < limit ? '#d97706' : '#dc2626';
+
+  // ── CHECKLIST ──
   const checklistHtml = LEADER_CHECKLIST.map((item, i) => `
     <div onclick="toggleLeaderCheck(${i})"
-      style="display:flex; align-items:center; gap:12px; padding:12px; background:#fff;
-             border-radius:12px; margin-bottom:8px; border:2px solid ${todayCheck[i]?'var(--success)':'var(--gray-200)'};
-             cursor:pointer; opacity:${todayCheck[i]?'0.65':'1'};">
-      <div style="width:24px; height:24px; border-radius:50%; flex-shrink:0;
-           background:${todayCheck[i]?'var(--success)':'var(--gray-200)'};
-           display:flex; align-items:center; justify-content:center;">
+      style="display:flex; align-items:center; gap:12px; padding:11px; background:#fff;
+             border-radius:12px; margin-bottom:7px; border:2px solid ${todayCheck[i]?'var(--success)':'var(--gray-200)'};
+             cursor:pointer; opacity:${todayCheck[i]?.65:1};">
+      <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
+           background:${todayCheck[i]?'var(--success)':'var(--gray-200)'};display:flex;align-items:center;justify-content:center;">
         ${todayCheck[i]?`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`:''}
       </div>
-      <span style="font-size:14px; font-weight:600; color:var(--navy); text-decoration:${todayCheck[i]?'line-through':'none'};">${item}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--navy);text-decoration:${todayCheck[i]?'line-through':'none'};">${item}</span>
     </div>`).join('');
 
-  // Diary entries
-  const todayDiary = diary[dk] || '';
-  const pastEntries = Object.entries(diary).filter(([k]) => k !== dk).sort((a,b) => b[0].localeCompare(a[0])).slice(0, 7);
-  const pastHtml = pastEntries.length ? pastEntries.map(([k, txt]) => `
-    <div style="background:var(--gray-50); border-radius:10px; padding:12px; margin-bottom:8px;">
-      <div style="font-size:11px; color:var(--gray-400); font-weight:700; margin-bottom:4px;">${k}</div>
-      <div style="font-size:13px; color:var(--gray-700); white-space:pre-wrap; line-height:1.6;">${txt.slice(0,200)}${txt.length>200?'...':''}</div>
-    </div>`).join('') : '<div style="font-size:13px; color:var(--gray-400); text-align:center; padding:16px 0;">Chưa có nhật ký nào</div>';
+  // ── REFLECTION PROMPTS ──
+  const REFLECTIONS = [
+    { id:'win',      label:'🏆 Chiến thắng hôm nay', ph:'Điều gì diễn ra tốt hôm nay?' },
+    { id:'learn',    label:'💡 Bài học rút ra',        ph:'Hôm nay bạn học được gì?' },
+    { id:'gratitude',label:'🙏 Biết ơn điều gì',       ph:'3 điều bạn biết ơn hôm nay?' },
+    { id:'improve',  label:'🔧 Cần cải thiện',         ph:'Ngày mai bạn sẽ làm khác đi điều gì?' },
+    { id:'energy',   label:'⚡ Năng lượng của bạn',    ph:'Hôm nay bạn cảm thấy thế nào? 1–10?' },
+  ];
+  const reflectHtml = REFLECTIONS.map(r => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px; font-weight:700; color:var(--navy); margin-bottom:4px;">${r.label}</div>
+      <textarea id="reflect-${r.id}" placeholder="${r.ph}"
+        oninput="saveReflect('${r.id}')"
+        style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:9px; font-size:13px; min-height:58px; resize:vertical; outline:none; font-family:inherit; line-height:1.6;">${todayDiary['reflect_'+r.id] || ''}</textarea>
+    </div>`).join('');
+
+  // Past diary
+  const pastEntries = Object.entries(diary).filter(([k]) => k !== dk).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const pastHtml = pastEntries.length ? pastEntries.map(([k, d]) => {
+    const entry = typeof d === 'object' ? d : { note: d };
+    const wins = entry.reflect_win || entry.note || '';
+    return `<div style="background:var(--gray-50);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--gray-400);font-weight:700;margin-bottom:4px;">${k}</div>
+      ${wins ? `<div style="font-size:13px;color:var(--gray-700);white-space:pre-wrap;line-height:1.5;">${wins.slice(0,160)}${wins.length>160?'...':''}</div>` : '<div style="font-size:12px;color:var(--gray-300);">Không có ghi chú</div>'}
+    </div>`;
+  }).join('') : '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:12px 0;">Chưa có nhật ký nào</div>';
 
   document.getElementById('mgr-diary-content').innerHTML = `
     <div class="hero-banner" style="background:linear-gradient(135deg,#1a2b4a,#3b1f6e);">
       <div class="hero-greeting">Lịch biểu & Nhật ký</div>
       <div class="hero-name">Leader</div>
-      <div class="hero-date">${formatDate(now)} · ${timeStr}</div>
+      <div class="hero-date">${formatDate(now)} · ${formatTime(now)}</div>
     </div>
     <div style="padding:12px 16px 100px;">
-      <p class="section-title">Lịch biểu hôm nay</p>
+
+      <!-- SOCIAL TRACKER -->
+      <div style="background:${overLimit?'#fef2f2':'#fff'}; border:2px solid ${socialColor}30; border-radius:14px; padding:16px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:${socialColor};">📵 Social Media hôm nay</div>
+            <div style="font-size:11px; color:var(--gray-400); margin-top:1px;">Giới hạn: ${limit} lần/ngày${lastTime ? ' · Lần cuối: '+lastTime : ''}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:28px; font-weight:900; color:${socialColor}; line-height:1;">${checkCount}</div>
+            <div style="font-size:10px; color:var(--gray-400);">lần vào</div>
+          </div>
+        </div>
+        <div style="background:var(--gray-200); border-radius:6px; height:8px; margin-bottom:10px; overflow:hidden;">
+          <div style="height:100%; width:${socialBarPct}%; background:${socialColor}; border-radius:6px; transition:width .3s;"></div>
+        </div>
+        ${overLimit ? `<div style="font-size:13px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:10px; padding:8px; background:#fee2e2; border-radius:8px;">⚠️ Đã vượt giới hạn hôm nay! Hãy đặt điện thoại xuống.</div>` : ''}
+        <div style="display:flex; gap:8px;">
+          <button onclick="logSocialCheck()" style="flex:1; background:${socialColor}; color:#fff; border:none; border-radius:10px; padding:11px; font-size:13px; font-weight:700; cursor:pointer;">
+            📱 Tôi vừa vào mạng xã hội
+          </button>
+          <button onclick="setSocialLimit()" style="background:var(--gray-100); border:none; border-radius:10px; padding:11px 14px; font-size:13px; cursor:pointer;">⚙️</button>
+        </div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <p class="section-title" style="margin:0;">Lịch biểu hôm nay</p>
+        <button onclick="openAddLearnSlot()" style="font-size:12px; background:#e0f2fe; color:#0891b2; border:none; border-radius:8px; padding:5px 10px; font-weight:700; cursor:pointer;">+ Thêm lịch học</button>
+      </div>
       <div class="card" style="padding:10px 16px; margin-bottom:4px;">${scheduleHtml}</div>
 
+      <!-- CHECKLIST -->
       <p class="section-title" style="margin-top:16px;">Checklist cuối ngày (${doneCnt}/${LEADER_CHECKLIST.length})</p>
-      <div style="background:var(--gray-50); border-radius:10px; overflow:hidden; padding:8px; margin-bottom:4px;">
+      <div style="background:var(--gray-50); border-radius:12px; padding:10px; margin-bottom:4px;">
         <div class="progress-bar" style="height:6px; margin-bottom:10px;">
           <div class="progress-fill" style="width:${Math.round(doneCnt/LEADER_CHECKLIST.length*100)}%;"></div>
         </div>
         ${checklistHtml}
       </div>
 
-      <p class="section-title" style="margin-top:16px;">Nhật ký hôm nay</p>
+      <!-- REFLECTION -->
+      <p class="section-title" style="margin-top:16px;">Suy ngẫm bản thân hôm nay</p>
+      <div class="card" style="margin-bottom:8px;">${reflectHtml}</div>
+
+      <!-- FREE NOTE -->
+      <p class="section-title">Ghi chú tự do</p>
       <div class="card" style="margin-bottom:8px;">
-        <textarea id="diary-today" placeholder="Hôm nay bạn suy nghĩ gì? Đội mình đang ở đâu? Điều gì cần thay đổi?..."
-          style="width:100%; border:none; outline:none; font-size:14px; line-height:1.8; min-height:140px; resize:vertical; font-family:inherit; color:var(--gray-800);"
-          oninput="saveDiaryToday()">${todayDiary}</textarea>
+        <textarea id="diary-note" placeholder="Bất cứ điều gì trong đầu bạn..."
+          oninput="saveReflect('note')"
+          style="width:100%; border:none; outline:none; font-size:14px; line-height:1.8; min-height:100px; resize:vertical; font-family:inherit; color:var(--gray-800);">${todayDiary.note || ''}</textarea>
       </div>
 
+      <!-- PAST -->
       <p class="section-title">Nhật ký trước đó</p>
       ${pastHtml}
     </div>`;
 }
 
+// ── SOCIAL TRACKER ──
+function logSocialCheck() {
+  const dk = todayKey();
+  const s = getSocialStore();
+  if (!s[dk]) s[dk] = { limit: 5, checks: [] };
+  s[dk].checks.push(new Date().toISOString());
+  saveSocialStore(s);
+  buildMgrDiary();
+  // Notify if over limit
+  const cnt = s[dk].checks.length;
+  if (cnt >= s[dk].limit) {
+    toast(`⚠️ Đã vào mạng ${cnt} lần — vượt giới hạn rồi!`, 'error');
+  } else {
+    toast(`Đã ghi nhận lần ${cnt}/${s[dk].limit}`, '');
+  }
+}
+function setSocialLimit() {
+  const dk = todayKey();
+  const s = getSocialStore();
+  const cur = s[dk]?.limit || 5;
+  const val = prompt(`Giới hạn vào mạng xã hội mỗi ngày (lần):`, cur);
+  if (val && !isNaN(val)) {
+    if (!s[dk]) s[dk] = { checks: [] };
+    s[dk].limit = parseInt(val);
+    saveSocialStore(s);
+    buildMgrDiary();
+  }
+}
+
+// ── LEARN SCHEDULE ──
+function openAddLearnSlot() {
+  const time = prompt('Giờ học (VD: 10:00):');
+  if (!time || !/^\d{1,2}:\d{2}$/.test(time.trim())) { toast('Giờ không hợp lệ (VD: 10:00)', 'error'); return; }
+  const label = prompt('Nội dung học:');
+  if (!label) return;
+  const note = prompt('Ghi chú (tùy chọn, Enter để bỏ qua):') || '';
+  const dk = todayKey();
+  const ls = getLearningStore();
+  if (!ls[dk]) ls[dk] = [];
+  ls[dk].push({ time: time.trim().padStart(5,'0'), label, note });
+  ls[dk].sort((a,b) => a.time.localeCompare(b.time));
+  saveLearningStore(ls);
+  buildMgrDiary();
+}
+function deleteLearnSlot(time, dk) {
+  const ls = getLearningStore();
+  if (ls[dk]) ls[dk] = ls[dk].filter(s => s.time !== time);
+  saveLearningStore(ls);
+  buildMgrDiary();
+}
+
+// ── REFLECTION + NOTE ──
 function toggleLeaderCheck(idx) {
   const dk = todayKey();
   const lchecks = getLeaderChecklist();
@@ -2428,15 +2564,18 @@ function toggleLeaderCheck(idx) {
 }
 
 let diaryTimer = null;
-function saveDiaryToday() {
+function saveReflect(field) {
   clearTimeout(diaryTimer);
   diaryTimer = setTimeout(() => {
-    const txt = document.getElementById('diary-today')?.value || '';
+    const val = document.getElementById(field === 'note' ? 'diary-note' : `reflect-${field}`)?.value || '';
     const diary = getDiaryStore();
-    diary[todayKey()] = txt;
+    const dk = todayKey();
+    if (typeof diary[dk] !== 'object' || Array.isArray(diary[dk])) diary[dk] = {};
+    diary[dk][field === 'note' ? 'note' : `reflect_${field}`] = val;
     saveDiaryStore(diary);
-  }, 800);
+  }, 700);
 }
+function saveDiaryToday() { saveReflect('note'); }
 
 // DEEP LINK: ?user=xxx
 // ─────────────────────────────────────────
