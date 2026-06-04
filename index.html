@@ -541,6 +541,17 @@
     .goal-kpi-card { background:var(--gray-50); border-radius:10px; padding:12px; }
     .goal-kpi-label { font-size:11px; color:var(--gray-500); margin-bottom:4px; }
     .goal-kpi-val { font-size:22px; font-weight:800; }
+    /* ── PACE CARD ── */
+    .pace-card { border-radius:12px; padding:16px; margin-bottom:10px; }
+    .pace-bar-wrap { position:relative; background:var(--gray-200); border-radius:8px; height:14px; margin:10px 0 6px; overflow:visible; }
+    .pace-bar-actual { height:100%; border-radius:8px; transition:width .4s; }
+    .pace-bar-today-marker { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--orange); border-radius:2px; }
+    .pace-bar-today-label { position:absolute; top:-18px; font-size:9px; font-weight:700; color:var(--orange); transform:translateX(-50%); white-space:nowrap; }
+    .pace-status { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:13px; font-weight:700; }
+    .pace-fast   { background:#dcfce7; color:#166534; }
+    .pace-ok     { background:#fef9c3; color:#854d0e; }
+    .pace-slow   { background:#fee2e2; color:#991b1b; }
+    .pace-none   { background:var(--gray-100); color:var(--gray-500); }
     /* ── REVENUE CALENDAR ── */
     .rev-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
     .rev-cal-header { font-size:10px; font-weight:700; color:var(--gray-400); text-align:center; padding:4px 0; }
@@ -1740,14 +1751,131 @@ function buildSaleGoals() {
     </div>
     <div style="padding:0 16px 80px;">
       ${formHtml}
-      <p class="section-title">Doanh số tháng này</p>
+      <p class="section-title">Nhịp độ doanh số</p>
+      ${buildPaceCard(m.id, now, true)}
+      <p class="section-title">Lịch doanh số tháng này</p>
       <div class="card" style="margin-bottom:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <span style="font-size:13px; color:var(--gray-500);">Tổng tháng</span>
-          <span style="font-size:20px; font-weight:800; color:#7c3aed;">${totalRev.toLocaleString('vi-VN')}đ</span>
-        </div>
         ${calHtml}
       </div>
+    </div>`;
+}
+
+function calcPace(totalRev, target, now) {
+  const year = now.getFullYear(), month = now.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysElapsed = now.getDate();
+  const expectedByNow = target * (daysElapsed / daysInMonth);
+  const paceRatio = expectedByNow > 0 ? totalRev / expectedByNow : null;
+  const projected = daysElapsed > 0 ? (totalRev / daysElapsed) * daysInMonth : 0;
+  return { daysInMonth, daysElapsed, expectedByNow, paceRatio, projected };
+}
+
+function buildPaceCard(memberId, now, compact) {
+  const mk = monthKey(now);
+  const goal = getMemberGoal(memberId, mk);
+  const revMap = getMonthRevenue(memberId);
+  const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
+  const m = memberById(memberId);
+  const target = goal?.revenue_target || 0;
+
+  const { daysInMonth, daysElapsed, expectedByNow, paceRatio, projected } = calcPace(totalRev, target, now);
+  const todayPct = Math.round(daysElapsed / daysInMonth * 100);
+
+  let statusClass, statusIcon, statusText;
+  if (!target) { statusClass='pace-none'; statusIcon='—'; statusText='Chưa đặt mục tiêu'; }
+  else if (paceRatio === null) { statusClass='pace-none'; statusIcon='—'; statusText='Chưa có dữ liệu'; }
+  else if (paceRatio >= 1.1) { statusClass='pace-fast'; statusIcon='🚀'; statusText='Nhanh hơn kế hoạch'; }
+  else if (paceRatio >= 0.85) { statusClass='pace-ok'; statusIcon='✅'; statusText='Đúng lộ trình'; }
+  else { statusClass='pace-slow'; statusIcon='⚠️'; statusText='Đang chậm hơn kế hoạch'; }
+
+  const actualPct = target ? Math.min(totalRev / target * 100, 100) : 0;
+  const barColor = statusClass === 'pace-fast' ? '#16a34a' : statusClass === 'pace-ok' ? '#d97706' : statusClass === 'pace-slow' ? '#dc2626' : '#94a3b8';
+
+  const projectedHtml = target && daysElapsed > 0 ? `
+    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--gray-500); margin-top:4px;">
+      <span>Dự báo cuối tháng:</span>
+      <span style="font-weight:700; color:${barColor};">${Math.round(projected).toLocaleString('vi-VN')}đ</span>
+    </div>` : '';
+
+  const header = compact ? '' : `<div style="font-size:15px; font-weight:800; color:var(--navy); margin-bottom:8px;">${m.name}</div>`;
+
+  return `
+    <div class="pace-card" style="background:var(--white); border:1px solid var(--gray-200);">
+      ${header}
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:6px;">
+        <div>
+          <div style="font-size:11px; color:var(--gray-400); margin-bottom:2px;">Thực tế / Mục tiêu</div>
+          <div style="font-size:18px; font-weight:800; color:var(--navy);">${totalRev.toLocaleString('vi-VN')}đ
+            <span style="font-size:12px; font-weight:400; color:var(--gray-400);">/ ${target ? target.toLocaleString('vi-VN')+'đ' : '?'}</span>
+          </div>
+        </div>
+        <span class="pace-status ${statusClass}">${statusIcon} ${statusText}</span>
+      </div>
+      ${target ? `
+      <div class="pace-bar-wrap">
+        <div class="pace-bar-actual" style="width:${actualPct}%; background:${barColor};"></div>
+        <div class="pace-bar-today-marker" style="left:${todayPct}%;">
+          <div class="pace-bar-today-label">Hôm nay</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--gray-400);">
+        <span>${Math.round(actualPct)}% đạt được</span>
+        <span>Ngày ${daysElapsed}/${daysInMonth}</span>
+      </div>
+      ${projectedHtml}
+      ` : ''}
+    </div>`;
+}
+
+function buildTeamPaceCard(now) {
+  const mk = monthKey(now);
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const daysElapsed = now.getDate();
+  const todayPct = Math.round(daysElapsed / daysInMonth * 100);
+
+  let totalRev = 0, totalTarget = 0;
+  MEMBERS.forEach(m => {
+    const revMap = getMonthRevenue(m.id);
+    totalRev += Object.values(revMap).reduce((a,b)=>a+b,0);
+    const goal = getMemberGoal(m.id, mk);
+    if (goal?.revenue_target) totalTarget += goal.revenue_target;
+  });
+
+  const { expectedByNow, paceRatio, projected } = calcPace(totalRev, totalTarget, now);
+  let statusClass, statusIcon, statusText;
+  if (!totalTarget) { statusClass='pace-none'; statusIcon='—'; statusText='Chưa có mục tiêu'; }
+  else if (paceRatio >= 1.1) { statusClass='pace-fast'; statusIcon='🚀'; statusText='Nhanh hơn kế hoạch'; }
+  else if (paceRatio >= 0.85) { statusClass='pace-ok'; statusIcon='✅'; statusText='Đúng lộ trình'; }
+  else { statusClass='pace-slow'; statusIcon='⚠️'; statusText='Chậm hơn kế hoạch'; }
+
+  const actualPct = totalTarget ? Math.min(totalRev / totalTarget * 100, 100) : 0;
+  const barColor = statusClass === 'pace-fast' ? '#16a34a' : statusClass === 'pace-ok' ? '#d97706' : statusClass === 'pace-slow' ? '#dc2626' : '#94a3b8';
+
+  return `
+    <div class="pace-card" style="background:linear-gradient(135deg,#1a2b4a,#2a3f6a); color:#fff; margin-bottom:16px;">
+      <div style="font-size:13px; opacity:.7; margin-bottom:4px;">Nhịp độ toàn team</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+        <div>
+          <div style="font-size:22px; font-weight:800;">${totalRev.toLocaleString('vi-VN')}đ</div>
+          <div style="font-size:12px; opacity:.6;">/ Mục tiêu: ${totalTarget ? totalTarget.toLocaleString('vi-VN')+'đ' : '?'}</div>
+        </div>
+        <span class="pace-status ${statusClass}">${statusIcon} ${statusText}</span>
+      </div>
+      ${totalTarget ? `
+      <div class="pace-bar-wrap" style="background:rgba(255,255,255,0.2);">
+        <div class="pace-bar-actual" style="width:${actualPct}%; background:${barColor};"></div>
+        <div class="pace-bar-today-marker" style="left:${todayPct}%; background:rgba(255,165,0,0.9);">
+          <div class="pace-bar-today-label" style="color:orange;">Hôm nay</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; opacity:.6; margin-top:4px;">
+        <span>${Math.round(actualPct)}% đạt được</span>
+        <span>Ngày ${daysElapsed}/${daysInMonth}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:6px; opacity:.8;">
+        <span>Dự báo cuối tháng:</span>
+        <span style="font-weight:700;">${daysElapsed > 0 ? Math.round(projected).toLocaleString('vi-VN')+'đ' : '—'}</span>
+      </div>` : ''}
     </div>`;
 }
 
@@ -1812,22 +1940,26 @@ function buildMgrGoals() {
   const memberCards = MEMBERS.map(m => {
     const goal = getMemberGoal(m.id, mk);
     const revMap = getMonthRevenue(m.id);
-    const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
     const st = goal?.status;
     return `
-      <div class="card" style="margin-bottom:10px; cursor:pointer;" onclick="openGoalReview('${m.id}')">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <div style="margin-bottom:4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0 2px; margin-bottom:4px;">
           <div style="font-weight:700; font-size:15px;">${m.name}</div>
-          ${st ? `<span class="goal-status-badge ${statusClass[st]}">${statusLabel[st]}</span>` : '<span style="font-size:12px;color:var(--gray-400);">Chưa đặt mục tiêu</span>'}
+          <div style="display:flex; gap:6px; align-items:center;">
+            ${st ? `<span class="goal-status-badge ${statusClass[st]}">${statusLabel[st]}</span>` : '<span style="font-size:11px;color:var(--gray-400);">Chưa đặt MT</span>'}
+            <button class="btn btn-ghost btn-sm" onclick="openGoalReview('${m.id}')" style="padding:4px 10px; font-size:12px;">Duyệt</button>
+          </div>
         </div>
-        ${goal ? `<div class="goal-kpi-grid">
-          ${GOAL_KPI_DEFS.map(k => goal[k.id] != null ? `<div style="font-size:12px;color:var(--gray-500);">${k.label.split('–')[0].trim()}: <strong style="color:${k.color}">${goal[k.id]}</strong></div>` : '').join('')}
-        </div>` : ''}
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-          <span style="font-size:12px; color:var(--gray-400);">Doanh số tháng</span>
-          <span style="font-size:14px; font-weight:700; color:#7c3aed;">${totalRev.toLocaleString('vi-VN')}đ</span>
-        </div>
-        ${buildRevenueCalendar(revMap, now)}
+        ${buildPaceCard(m.id, now, true)}
+        <details style="margin-bottom:12px;">
+          <summary style="font-size:12px; color:var(--gray-400); cursor:pointer; padding:4px 0; list-style:none; display:flex; align-items:center; gap:4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+            Xem lịch doanh số
+          </summary>
+          <div class="card" style="margin-top:6px; padding:10px;">
+            ${buildRevenueCalendar(revMap, now)}
+          </div>
+        </details>
       </div>`;
   }).join('');
 
@@ -1838,7 +1970,8 @@ function buildMgrGoals() {
       <div class="hero-date">${monthLabel}</div>
     </div>
     <div style="padding:12px 16px 80px;">
-      <p class="section-title">Mục tiêu từng thành viên</p>
+      ${buildTeamPaceCard(now)}
+      <p class="section-title">Nhịp độ từng thành viên</p>
       ${memberCards}
     </div>`;
 }
