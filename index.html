@@ -805,17 +805,17 @@
   </div>
   <!-- Sale nav -->
   <div id="nav-sale" style="display:contents; display:none">
-    <button class="nav-item active" id="nav-sale-tasks" onclick="showPage('sale-tasks')">
+    <button class="nav-item active" id="nav-sale-goals" onclick="showPage('sale-goals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      Mục Tiêu
+    </button>
+    <button class="nav-item" id="nav-sale-tasks" onclick="showPage('sale-tasks')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      Việc Của Tôi
+      Việc Hôm Nay
     </button>
     <button class="nav-item" id="nav-sale-report" onclick="showPage('sale-report')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Báo Cáo
-    </button>
-    <button class="nav-item" id="nav-sale-goals" onclick="showPage('sale-goals')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-      Mục Tiêu
     </button>
   </div>
 </nav>
@@ -1084,10 +1084,10 @@ function enterApp() {
     document.getElementById('role-badge').textContent = 'Sale';
     document.getElementById('nav-mgr').style.display = 'none';
     document.getElementById('nav-sale').style.display = 'contents';
+    buildSaleGoals();
     buildSaleTasks();
     buildSaleReport();
-    buildSaleGoals();
-    showPage('sale-tasks');
+    showPage('sale-goals');
   }
 }
 
@@ -1302,6 +1302,12 @@ function renderReviewList() {
             </div>` : ''}
           ${report.tamsự ? `<div class="review-field" style="background:#fff8f0;border-radius:8px;padding:10px;border-left:3px solid var(--orange);"><div class="review-field-label" style="color:var(--orange);">💬 Tâm sự</div><div class="review-field-value" style="white-space:pre-wrap;">${report.tamsự}</div></div>` : ''}
           ${report.dexuat ? `<div class="review-field" style="background:#f0fdf4;border-radius:8px;padding:10px;border-left:3px solid #16a34a;"><div class="review-field-label" style="color:#16a34a;">💡 Đề xuất</div><div class="review-field-value" style="white-space:pre-wrap;">${report.dexuat}</div></div>` : ''}
+          ${(report.ho_tro || report.hoat_dong_team) ? `
+            <div style="background:#f0f9ff;border-radius:8px;padding:10px;border-left:3px solid #0891b2;">
+              <div style="font-size:10px;font-weight:700;color:#0891b2;margin-bottom:4px;">🙋 Muốn Leader hỗ trợ</div>
+              ${report.ho_tro ? `<div style="font-size:12px;margin-bottom:3px;white-space:pre-wrap;">${report.ho_tro}</div>` : ''}
+              ${report.hoat_dong_team ? `<div style="font-size:12px;color:var(--gray-600);border-top:1px solid #bae6fd;padding-top:4px;margin-top:3px;white-space:pre-wrap;">🎯 ${report.hoat_dong_team}</div>` : ''}
+            </div>` : ''}
           ${feedback ? `<div class="feedback-box"><div class="feedback-box-label">Nhận xét Leader</div><div style="font-size:14px; color:var(--navy);">${feedback}</div></div>` : ''}
           <button class="btn btn-ghost btn-sm btn-full mt-8" onclick="openFeedbackModal('${m.id}')">
             ${feedback ? '✏️ Sửa nhận xét' : '💬 Thêm nhận xét'}
@@ -1656,6 +1662,12 @@ function buildSaleReport() {
             </div>` : ''}
           ${existing.tamsự ? `<div class="review-field mb-8"><div class="review-field-label">💬 Tâm sự</div><div class="review-field-value" style="white-space:pre-wrap;">${existing.tamsự}</div></div>` : ''}
           ${existing.dexuat ? `<div class="review-field mb-8"><div class="review-field-label">💡 Đề xuất</div><div class="review-field-value" style="white-space:pre-wrap;">${existing.dexuat}</div></div>` : ''}
+          ${(existing.ho_tro || existing.hoat_dong_team) ? `
+            <div style="background:#f0f9ff;border-radius:10px;padding:12px;border-left:3px solid #0891b2;">
+              <div style="font-size:11px;font-weight:700;color:#0891b2;margin-bottom:6px;">🙋 Muốn Leader hỗ trợ</div>
+              ${existing.ho_tro ? `<div style="font-size:13px;margin-bottom:4px;white-space:pre-wrap;">${existing.ho_tro}</div>` : ''}
+              ${existing.hoat_dong_team ? `<div style="font-size:12px;color:var(--gray-600);border-top:1px solid #bae6fd;padding-top:6px;margin-top:4px;white-space:pre-wrap;">🎯 Hoạt động team: ${existing.hoat_dong_team}</div>` : ''}
+            </div>` : ''}
           ${feedback ? `
             <div class="feedback-box mt-12">
               <div class="feedback-box-label">💬 Phản hồi từ Leader</div>
@@ -1722,11 +1734,25 @@ function buildSaleReport() {
         <textarea id="rpt-tamsự" placeholder="Viết thoải mái, Leader sẽ đọc và phản hồi..."
           style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:14px; min-height:90px; resize:vertical; outline:none; font-family:inherit;">${existing?.tamsự || ''}</textarea>
       </div>
-      <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid #16a34a20; margin-bottom:16px;">
+      <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid #16a34a20; margin-bottom:12px;">
         <div style="font-size:13px; font-weight:700; color:#16a34a; margin-bottom:4px;">💡 Đề xuất của bạn</div>
         <div style="font-size:12px; color:var(--gray-400); margin-bottom:8px;">Bạn có ý tưởng, đề xuất gì để cải thiện công việc, quy trình hoặc sản phẩm không?</div>
         <textarea id="rpt-dexuat" placeholder="Đề xuất của bạn sẽ được Leader xem xét..."
-          style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:14px; min-height:80px; resize:vertical; outline:none; font-family:inherit;">${existing?.dexuat || ''}</textarea>
+          style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:14px; min-height:70px; resize:vertical; outline:none; font-family:inherit;">${existing?.dexuat || ''}</textarea>
+      </div>
+      <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid #0891b220; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; color:#0891b2; margin-bottom:4px;">🙋 Bạn muốn Leader hỗ trợ gì?</div>
+        <div style="font-size:12px; color:var(--gray-400); margin-bottom:10px;">Leader ở đây để giúp bạn. Cần hỗ trợ gì, muốn thay đổi điều gì, hay muốn team có hoạt động gì — cứ nói thẳng!</div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; font-weight:600; color:#0891b2; display:block; margin-bottom:5px;">Cần Leader hỗ trợ / thay đổi gì?</label>
+          <textarea id="rpt-ho_tro" placeholder="VD: Cần thêm tài liệu giới thiệu SP, muốn được training kỹ hơn về cách chốt đơn..."
+            style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:13px; min-height:65px; resize:vertical; outline:none; font-family:inherit;">${existing?.ho_tro || ''}</textarea>
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#0891b2; display:block; margin-bottom:5px;">Muốn team có hoạt động gì?</label>
+          <textarea id="rpt-hoat_dong_team" placeholder="VD: Muốn có buổi chia sẻ kinh nghiệm chốt đơn, muốn team đi ăn chung, muốn có game thi đua..."
+            style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:13px; min-height:65px; resize:vertical; outline:none; font-family:inherit;">${existing?.hoat_dong_team || ''}</textarea>
+        </div>
       </div>
       <button class="btn btn-primary btn-full" onclick="submitReport()" style="font-size:16px; padding:16px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1770,6 +1796,8 @@ function submitReport() {
     revenue:  revenue !== ''  ? Number(revenue)  : null,
     kh_roi_bo: kh_roi_bo_val !== '' ? Number(kh_roi_bo_val) : null,
     kh_roi_bo_action, hang_ton, issues, tomorrow, tamsự, dexuat,
+    ho_tro:          document.getElementById('rpt-ho_tro')?.value.trim(),
+    hoat_dong_team:  document.getElementById('rpt-hoat_dong_team')?.value.trim(),
     submittedAt: new Date().toISOString()
   };
   saveTodayData(store, key, day);
@@ -1811,8 +1839,29 @@ function buildSaleGoals() {
     </div>` : '';
 
   const isLocked = goal?.status === 'approved';
+
+  // Big KPI snapshot (shown when approved)
+  const kpiSnapshotHtml = (goal && goal.status === 'approved') ? `
+    <div style="margin-bottom:4px;">
+      <p class="section-title">Mục tiêu tháng của bạn</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        ${GOAL_KPI_DEFS.map(k => goal[k.id] != null ? `
+          <div style="background:#fff; border-radius:12px; padding:14px; border:2px solid ${k.color}30; text-align:center;">
+            <div style="font-size:10px; font-weight:700; color:${k.color}; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">${k.label}</div>
+            <div style="font-size:36px; font-weight:900; color:${k.color}; line-height:1;">${goal[k.id]}</div>
+            <div style="font-size:10px; color:var(--gray-400); margin-top:2px;">/tháng</div>
+          </div>` : '').join('')}
+      </div>
+      ${goal.revenue_target ? `
+        <div style="background:#fff; border-radius:12px; padding:14px; border:2px solid #7c3aed30; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-size:13px; font-weight:700; color:#7c3aed;">💰 Doanh số mục tiêu tháng</div>
+          <div style="font-size:22px; font-weight:900; color:#7c3aed;">${goal.revenue_target.toLocaleString('vi-VN')}đ</div>
+        </div>` : ''}
+    </div>` : '';
+
   const formHtml = `
-    <p class="section-title">Mục tiêu ${monthLabel}</p>
+    ${kpiSnapshotHtml}
+    <p class="section-title">${goal?.status === 'approved' ? 'Chỉnh sửa mục tiêu' : 'Đặt mục tiêu ' + monthLabel}</p>
     ${statusHtml ? `<div style="margin-bottom:12px;">${statusHtml}</div>` : ''}
     ${leaderNoteHtml}
     <div class="card" style="margin-bottom:12px;">
