@@ -817,6 +817,11 @@
   <div id="mgr-diary-content"></div>
 </div>
 
+<!-- HỒ SƠ 360° -->
+<div class="page" id="page-profile">
+  <div id="profile-content"></div>
+</div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
   <!-- Manager nav -->
@@ -861,6 +866,10 @@
     <button class="nav-item" id="nav-sale-report" onclick="showPage('sale-report')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Báo Cáo
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Hồ Sơ
     </button>
   </div>
 </nav>
@@ -1189,6 +1198,7 @@ function showPage(pageId) {
   if (pageId === 'sale-goals') buildSaleGoals();
   if (pageId === 'mgr-goals') buildMgrGoals();
   if (pageId === 'mgr-diary') buildMgrDiary();
+  if (pageId === 'profile') buildProfile(currentUser?.id);
 }
 
 // ─────────────────────────────────────────
@@ -1238,11 +1248,17 @@ function buildManagerHome() {
       : tasks.length
         ? `<span class="pill pill-orange">${tasks.length} việc</span>`
         : '<span class="pill pill-gray">Chưa giao</span>';
+    const avatars = getAvatarStore();
+    const av = avatars[m.id];
+    const avatarEl = av
+      ? `<img src="${av}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" />`
+      : `<div class="avatar" style="background:${m.color}">${initials(m.name)}</div>`;
     return `
-      <div class="member-row ${statusClass}" onclick="openAssignModal('${m.id}')">
-        <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
-        <div class="member-info">
-          <div class="member-name">${m.name}</div>
+      <div class="member-row ${statusClass}" style="display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;cursor:pointer;" onclick="openAssignModal('${m.id}')">
+        <div onclick="event.stopPropagation();openMemberProfile('${m.id}')" style="cursor:pointer;">${avatarEl}</div>
+        <div class="member-info" style="flex:1;">
+          <div class="member-name" style="font-weight:700;">${m.name}</div>
+          <div style="font-size:11px;color:var(--gray-400);">Xem hồ sơ 360°</div>
         </div>
         <div class="member-status">${statusPill}</div>
         <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
@@ -2724,6 +2740,167 @@ function checkDeepLink() {
     }
   }
   return false;
+}
+
+// ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// HỒ SƠ 360°
+// ─────────────────────────────────────────
+function getProfileStore() { return JSON.parse(localStorage.getItem('dsm_profiles') || '{}'); }
+function saveProfileStore(d) { localStorage.setItem('dsm_profiles', JSON.stringify(d)); }
+function getAvatarStore() { return JSON.parse(localStorage.getItem('dsm_avatars') || '{}'); }
+function saveAvatarStore(d) { localStorage.setItem('dsm_avatars', JSON.stringify(d)); }
+
+function buildProfile(memberId, viewAs) {
+  // viewAs = 'leader' when leader opens a member's profile
+  const isLeader = currentUser?.role === 'manager';
+  const targetId = memberId || currentUser?.id;
+  const member = targetId === 'manager' ? { id:'manager', name:'Leader', color:'#1a2b4a' } : memberById(targetId);
+  if (!member) return;
+
+  const profiles = getProfileStore();
+  const avatars = getAvatarStore();
+  const p = profiles[targetId] || {};
+  const avatar = avatars[targetId];
+
+  // ── Auto analysis from KPI + revenue ──
+  const revMap = getMonthRevenue(targetId);
+  const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
+  const kpi = getSaleMonthlyKPI ? getSaleMonthlyKPI(targetId) : {};
+  const mk = monthKey();
+  const goal = getMemberGoal(targetId, mk) || {};
+  const revPct = goal.revenue_target > 0 ? Math.round(totalRev/goal.revenue_target*100) : null;
+  const daysWithRev = Object.values(revMap).filter(v=>v>0).length;
+
+  let analysisItems = [];
+  if (revPct !== null) {
+    if (revPct >= 100) analysisItems.push({ icon:'🚀', color:'#16a34a', text:`Doanh số vượt mục tiêu ${revPct}% — hiệu suất xuất sắc!` });
+    else if (revPct >= 70) analysisItems.push({ icon:'📈', color:'#d97706', text:`Đạt ${revPct}% mục tiêu doanh số — đang đúng lộ trình` });
+    else if (revPct > 0) analysisItems.push({ icon:'⚠️', color:'#dc2626', text:`Mới đạt ${revPct}% mục tiêu — cần tăng tốc` });
+  }
+  if (daysWithRev > 0) {
+    const avg = Math.round(totalRev/daysWithRev);
+    analysisItems.push({ icon:'💡', color:'#7c3aed', text:`Doanh số trung bình ${avg.toLocaleString('vi-VN')}đ/ngày có bán hàng` });
+  }
+  if (kpi.mua_hang > 0) analysisItems.push({ icon:'✅', color:'#16a34a', text:`Đã lên ${kpi.mua_hang} đơn hàng mới tháng này` });
+  if (kpi.cho_chot > 0) analysisItems.push({ icon:'🎯', color:'#f57c20', text:`Có ${kpi.cho_chot} KH đang chờ chốt — cần theo sát` });
+  if (p.strengths) analysisItems.push({ icon:'💪', color:'#059669', text:`Điểm mạnh: ${p.strengths.substring(0,60)}${p.strengths.length>60?'...':''}` });
+
+  const analysisHtml = analysisItems.length > 0 ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:.5px; margin-bottom:10px;">PHÂN TÍCH TỰ ĐỘNG</div>
+      ${analysisItems.map(a=>`
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; background:#fff; border-radius:12px; margin-bottom:6px; border-left:3px solid ${a.color};">
+          <span style="font-size:16px;">${a.icon}</span>
+          <span style="font-size:13px; color:var(--gray-700);">${a.text}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  // ── Action suggestions ──
+  let actions = [];
+  if (revPct !== null && revPct < 70) actions.push('📞 Lên kế hoạch gọi thêm KH tiềm năng');
+  if (kpi.cho_chot > 2) actions.push('🤝 Hỗ trợ chốt ' + kpi.cho_chot + ' KH đang chờ');
+  if (!p.strengths) actions.push('📝 Điền đầy đủ hồ sơ để nhận phân tích chi tiết hơn');
+  if (daysWithRev === 0) actions.push('💰 Chưa có doanh số — cần check lại mục tiêu ngày');
+  if (p.develop) actions.push('🌱 Điểm cần phát triển: ' + p.develop.substring(0,50));
+
+  const actionsHtml = actions.length > 0 ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:.5px; margin-bottom:10px;">GỢI Ý HÀNH ĐỘNG</div>
+      <div style="background:#fffbeb; border-radius:12px; padding:12px; border:1.5px solid #fde68a;">
+        ${actions.map((a,i)=>`<div style="font-size:13px; color:#92400e; padding:5px 0; ${i>0?'border-top:1px solid #fef3c7;':''}">${a}</div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const profileFields = [
+    { id:'bio',         label:'📝 Bio / Giới thiệu',           ph:'Vài dòng về bản thân...', rows:2 },
+    { id:'strengths',   label:'💪 Điểm mạnh',                  ph:'VD: Kiên trì, chăm chỉ, giỏi lắng nghe...', rows:2 },
+    { id:'develop',     label:'🌱 Điểm cần phát triển',        ph:'VD: Cần cải thiện kỹ năng chốt sale...', rows:2 },
+    { id:'motivation',  label:'🔥 Động lực làm việc',          ph:'Điều gì thúc đẩy bạn mỗi ngày?', rows:2 },
+    { id:'style',       label:'💬 Phong cách giao tiếp',       ph:'VD: Cởi mở, thẳng thắn, lắng nghe trước...', rows:2 },
+    { id:'goals_life',  label:'🎯 Mục tiêu cá nhân (dài hạn)', ph:'Bạn muốn đạt được gì trong 1-3 năm?', rows:2 },
+  ];
+
+  const canEdit = !isLeader || targetId === 'manager';
+
+  const fieldsHtml = profileFields.map(f => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:700; color:var(--gray-600); margin-bottom:5px;">${f.label}</div>
+      ${canEdit ? `
+        <textarea id="pf-${f.id}" rows="${f.rows}" placeholder="${f.ph}"
+          oninput="saveProfileField('${targetId}','${f.id}',this.value)"
+          style="width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 11px; font-size:13px; resize:none; background:#fafafa; outline:none; font-family:inherit;"
+        >${p[f.id]||''}</textarea>` :
+        `<div style="font-size:13px; color:var(--gray-700); background:#f8fafc; border-radius:10px; padding:9px 11px; min-height:38px;">${p[f.id]||'<span style="color:var(--gray-300);">Chưa điền</span>'}</div>`
+      }
+    </div>`).join('');
+
+  const leaderNoteHtml = isLeader ? `
+    <div style="margin-top:8px; padding-top:16px; border-top:1.5px dashed #e2e8f0;">
+      <div style="font-size:12px; font-weight:700; color:#7c3aed; margin-bottom:5px;">🔒 Ghi chú riêng của Leader (chỉ bạn thấy)</div>
+      <textarea id="pf-leadernote" rows="3" placeholder="Nhận xét, quan sát cá nhân về thành viên này..."
+        oninput="saveProfileField('${targetId}','leaderNote',this.value)"
+        style="width:100%; border:1.5px solid #ddd6fe; border-radius:10px; padding:9px 11px; font-size:13px; resize:none; background:#faf5ff; outline:none; font-family:inherit;"
+      >${p.leaderNote||''}</textarea>
+    </div>` : '';
+
+  const avatarHtml = avatar
+    ? `<img src="${avatar}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);" />`
+    : `<div style="width:88px;height:88px;border-radius:50%;background:${member.color};display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;border:3px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);">${initials(member.name)}</div>`;
+
+  const backBtn = (isLeader && targetId !== 'manager') ? `
+    <button onclick="showPage('mgr-home')" style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.2);border:none;border-radius:10px;padding:6px 10px;color:#fff;font-size:13px;cursor:pointer;">← Quay lại</button>` : '';
+
+  document.getElementById('profile-content').innerHTML = `
+    <div style="background:linear-gradient(135deg,${member.color},${member.color}cc);padding:32px 20px 24px;border-radius:0 0 28px 28px;margin:-16px -16px 20px;position:relative;text-align:center;">
+      ${backBtn}
+      <div style="display:flex;justify-content:center;margin-bottom:12px;position:relative;display:inline-block;">
+        ${avatarHtml}
+        ${canEdit ? `<label for="avatar-upload-${targetId}" style="position:absolute;bottom:0;right:0;background:#f57c20;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.3);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <input type="file" id="avatar-upload-${targetId}" accept="image/*" style="display:none" onchange="uploadAvatar('${targetId}',this)" />
+        </label>` : ''}
+      </div>
+      <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:4px;">${member.name}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.8);">${p.bio ? p.bio.substring(0,60) : 'Sale Team 06'}</div>
+    </div>
+
+    <div style="padding:0 0 80px;">
+      ${analysisHtml}
+      ${actionsHtml}
+
+      <div style="font-size:11px;font-weight:700;color:var(--gray-500);letter-spacing:.5px;margin-bottom:10px;">CHÂN DUNG 360°</div>
+      <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;border:1.5px solid #f1f5f9;">
+        ${fieldsHtml}
+        ${leaderNoteHtml}
+      </div>
+    </div>`;
+}
+
+function uploadAvatar(memberId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const avatars = getAvatarStore();
+    avatars[memberId] = e.target.result;
+    saveAvatarStore(avatars);
+    buildProfile(memberId);
+    toast('Đã cập nhật ảnh!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveProfileField(memberId, field, value) {
+  const profiles = getProfileStore();
+  if (!profiles[memberId]) profiles[memberId] = {};
+  profiles[memberId][field] = value;
+  saveProfileStore(profiles);
+}
+
+function openMemberProfile(memberId) {
+  showPage('profile');
+  buildProfile(memberId, 'leader');
 }
 
 // ─────────────────────────────────────────
