@@ -532,6 +532,24 @@
       margin-top: 10px;
     }
     .feedback-box-label { font-size: 12px; font-weight: 700; color: var(--orange-dark); margin-bottom: 6px; }
+    /* ── GOALS ── */
+    .goal-status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+    .goal-status-pending  { background:#fef3c7; color:#92400e; }
+    .goal-status-approved { background:#dcfce7; color:#166534; }
+    .goal-status-revision { background:#fee2e2; color:#991b1b; }
+    .goal-kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+    .goal-kpi-card { background:var(--gray-50); border-radius:10px; padding:12px; }
+    .goal-kpi-label { font-size:11px; color:var(--gray-500); margin-bottom:4px; }
+    .goal-kpi-val { font-size:22px; font-weight:800; }
+    /* ── REVENUE CALENDAR ── */
+    .rev-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .rev-cal-header { font-size:10px; font-weight:700; color:var(--gray-400); text-align:center; padding:4px 0; }
+    .rev-cal-day { border-radius:6px; padding:4px 2px; text-align:center; min-height:44px; background:var(--gray-100); cursor:default; }
+    .rev-cal-day.has-data { background:var(--navy); color:#fff; }
+    .rev-cal-day.today { box-shadow:0 0 0 2px var(--orange); }
+    .rev-cal-day-num { font-size:10px; font-weight:700; }
+    .rev-cal-day-val { font-size:9px; margin-top:2px; line-height:1.2; }
+    .rev-cal-day.empty { background:transparent; }
 
     /* ── CHECKLIST ── */
     .check-item {
@@ -737,6 +755,16 @@
   <div id="sale-report-content"></div>
 </div>
 
+<!-- SALE: MỤC TIÊU -->
+<div class="page" id="page-sale-goals">
+  <div id="sale-goals-content"></div>
+</div>
+
+<!-- MANAGER: MỤC TIÊU -->
+<div class="page" id="page-mgr-goals">
+  <div id="mgr-goals-content"></div>
+</div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
   <!-- Manager nav -->
@@ -752,6 +780,13 @@
       </div>
       Báo Cáo
     </button>
+    <button class="nav-item" id="nav-mgr-goals" onclick="showPage('mgr-goals')">
+      <div class="nav-item-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span id="nav-badge-goals" class="nav-badge" style="display:none">0</span>
+      </div>
+      Mục Tiêu
+    </button>
     <button class="nav-item" id="nav-mgr-settings" onclick="showPage('mgr-settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Cài Đặt
@@ -766,6 +801,10 @@
     <button class="nav-item" id="nav-sale-report" onclick="showPage('sale-report')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Báo Cáo
+    </button>
+    <button class="nav-item" id="nav-sale-goals" onclick="showPage('sale-goals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      Mục Tiêu
     </button>
   </div>
 </nav>
@@ -824,6 +863,24 @@
     <div style="display:flex; gap:8px; margin-top:4px;">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-feedback')">Hủy</button>
       <button class="btn btn-primary" style="flex:1" onclick="saveFeedback()">Lưu Nhận Xét</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DUYỆT MỤC TIÊU -->
+<div class="modal-overlay" id="modal-goal-review">
+  <div class="modal" style="position:relative;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-goal-review')">✕</button>
+    <div class="modal-title" id="modal-goal-review-title">Duyệt Mục Tiêu</div>
+    <div id="modal-goal-review-content"></div>
+    <div class="form-group mt-12">
+      <label class="form-label">Ghi chú cho sale</label>
+      <textarea class="form-textarea" id="goal-review-note" placeholder="Nhận xét, góp ý hoặc yêu cầu chỉnh sửa..."></textarea>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn btn-ghost" style="flex:1; color:var(--danger);" onclick="reviewGoal('revision')">Yêu cầu sửa</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="reviewGoal('approved')">Chấp nhận</button>
     </div>
   </div>
 </div>
@@ -908,6 +965,40 @@ function priorityDotClass(p) {
 }
 function memberById(id) { return MEMBERS.find(m => m.id === id); }
 
+// ─── GOALS STORAGE ───
+function getGoalsStore() { return JSON.parse(localStorage.getItem('dsm_goals') || '{}'); }
+function setGoalsStore(d) { localStorage.setItem('dsm_goals', JSON.stringify(d)); }
+function monthKey(d) { return (d || new Date()).toISOString().slice(0,7); }
+function getMemberGoal(memberId, mk) {
+  const s = getGoalsStore(); return (s[mk||monthKey()] || {})[memberId] || null;
+}
+function setMemberGoal(memberId, mk, goal) {
+  const s = getGoalsStore();
+  if (!s[mk]) s[mk] = {};
+  s[mk][memberId] = goal;
+  setGoalsStore(s);
+}
+// ─── REVENUE HELPERS ───
+function getMonthRevenue(memberId) {
+  const store = getStore();
+  const now = new Date();
+  const mk = monthKey(now);
+  const result = {};
+  Object.keys(store).forEach(dateKey => {
+    if (dateKey.startsWith(mk)) {
+      const r = store[dateKey]?.reports?.[memberId];
+      if (r?.revenue != null) result[dateKey] = r.revenue;
+    }
+  });
+  return result; // { 'YYYY-MM-DD': number }
+}
+function formatRevenue(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'tr';
+  if (n >= 1000) return Math.round(n/1000) + 'k';
+  return n.toString();
+}
+
 // toast
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
@@ -976,6 +1067,7 @@ function enterApp() {
     buildManagerHome();
     buildManagerReview();
     buildManagerSettings();
+    updateGoalsBadge();
     showPage('mgr-home');
   } else {
     document.getElementById('role-badge').textContent = 'Sale';
@@ -983,6 +1075,7 @@ function enterApp() {
     document.getElementById('nav-sale').style.display = 'contents';
     buildSaleTasks();
     buildSaleReport();
+    buildSaleGoals();
     showPage('sale-tasks');
   }
 }
@@ -1004,6 +1097,8 @@ function showPage(pageId) {
   if (pageId === 'mgr-settings') buildManagerSettings();
   if (pageId === 'sale-tasks') buildSaleTasks();
   if (pageId === 'sale-report') buildSaleReport();
+  if (pageId === 'sale-goals') buildSaleGoals();
+  if (pageId === 'mgr-goals') buildMgrGoals();
 }
 
 // ─────────────────────────────────────────
@@ -1507,6 +1602,15 @@ function buildSaleReport() {
           <span style="font-size:13px; color:var(--gray-500);">/ Mục tiêu: <strong>${k.target}</strong></span>
         </div>
       </div>`).join('')}
+    <div class="report-section" style="border-left:4px solid #7c3aed; padding-left:12px;">
+      <div class="report-section-title" style="color:#7c3aed;">Doanh số hôm nay (VND)</div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:6px;">
+        <input class="form-input" type="number" min="0" id="rpt-revenue"
+          value="${existing?.revenue ?? ''}"
+          placeholder="Nhập doanh số (VD: 5000000)"
+          style="flex:1; font-size:16px; font-weight:700;" />
+      </div>
+    </div>
     <div class="report-section" style="margin-top:4px;">
       <div class="report-section-title">Khó khăn / Vấn đề phát sinh</div>
       <textarea class="form-textarea" id="rpt-issues" placeholder="Gặp khó khăn gì? Cần hỗ trợ gì?" style="min-height:70px;">${existing?.issues || ''}</textarea>
@@ -1542,11 +1646,13 @@ function submitReport() {
   }
 
   const { store, key, day } = getTodayData();
+  const revenue = document.getElementById('rpt-revenue')?.value;
   day.reports[currentUser.id] = {
     data_moi: data_moi !== '' ? Number(data_moi) : null,
     khtn:     khtn !== ''     ? Number(khtn)     : null,
     cho_chot: cho_chot !== '' ? Number(cho_chot) : null,
     mua_hang: mua_hang !== '' ? Number(mua_hang) : null,
+    revenue:  revenue !== ''  ? Number(revenue)  : null,
     issues, tomorrow,
     submittedAt: new Date().toISOString()
   };
@@ -1556,6 +1662,230 @@ function submitReport() {
 }
 
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// SALE: GOALS PAGE
+// ─────────────────────────────────────────
+const GOAL_KPI_DEFS = [
+  { id:'data_moi', label:'Data tiếp cận mới (có phản hồi)', color:'#1a2b4a', suggest:30 },
+  { id:'khtn',     label:'KH quan tâm SP, đang trao đổi',  color:'#2a6a3f', suggest:15 },
+  { id:'cho_chot', label:'KH chờ chốt (hẹn mua / lên kho)', color:'#d97706', suggest:5  },
+  { id:'mua_hang', label:'Mua hàng mới – lên đơn',          color:'#dc2626', suggest:2  },
+];
+
+function buildSaleGoals() {
+  if (!currentUser || currentUser.role === 'manager') return;
+  const m = currentUser;
+  const mk = monthKey();
+  const now = new Date();
+  const monthLabel = now.toLocaleDateString('vi-VN', { month:'long', year:'numeric' });
+  const goal = getMemberGoal(m.id, mk);
+  const revMap = getMonthRevenue(m.id);
+  const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
+
+  const statusHtml = !goal ? '' : {
+    pending:  '<span class="goal-status-badge goal-status-pending">⏳ Chờ Leader duyệt</span>',
+    approved: '<span class="goal-status-badge goal-status-approved">✅ Đã được duyệt</span>',
+    revision: '<span class="goal-status-badge goal-status-revision">✏️ Cần chỉnh sửa</span>',
+  }[goal.status] || '';
+
+  const leaderNoteHtml = goal?.leaderNote ? `
+    <div class="feedback-box mt-8">
+      <div class="feedback-box-label">💬 Ghi chú từ Leader</div>
+      <div style="font-size:14px;">${goal.leaderNote}</div>
+    </div>` : '';
+
+  const isLocked = goal?.status === 'approved';
+  const formHtml = `
+    <p class="section-title">Mục tiêu ${monthLabel}</p>
+    ${statusHtml ? `<div style="margin-bottom:12px;">${statusHtml}</div>` : ''}
+    ${leaderNoteHtml}
+    <div class="card" style="margin-bottom:12px;">
+      ${GOAL_KPI_DEFS.map(k => `
+        <div style="margin-bottom:14px;">
+          <label class="form-label" style="color:${k.color};">${k.label}</label>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input class="form-input" type="number" min="0" id="goal-${k.id}"
+              value="${goal?.[k.id] ?? ''}"
+              placeholder="Mục tiêu (gợi ý: ${k.suggest})"
+              ${isLocked ? 'disabled' : ''}
+              style="width:130px; font-size:17px; font-weight:700; text-align:center;" />
+            <span style="font-size:12px; color:var(--gray-400);">gợi ý: ${k.suggest}/tháng</span>
+          </div>
+        </div>`).join('')}
+      <div>
+        <label class="form-label">Mục tiêu doanh số tháng (VND)</label>
+        <input class="form-input" type="number" min="0" id="goal-revenue"
+          value="${goal?.revenue_target ?? ''}"
+          placeholder="VD: 50000000"
+          ${isLocked ? 'disabled' : ''}
+          style="font-size:16px; font-weight:700;" />
+      </div>
+      <div style="margin-top:14px;">
+        <label class="form-label">Cam kết / Ghi chú</label>
+        <textarea class="form-textarea" id="goal-notes" placeholder="Cam kết của bạn với mục tiêu này..." ${isLocked ? 'disabled' : ''}>${goal?.notes || ''}</textarea>
+      </div>
+      ${!isLocked ? `<button class="btn btn-primary btn-full mt-4" onclick="submitGoal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+        ${goal ? 'Cập nhật & Gửi lại' : 'Gửi mục tiêu cho Leader'}
+      </button>` : `<button class="btn btn-ghost btn-full mt-4" onclick="resetGoalForEdit()">Chỉnh sửa mục tiêu</button>`}
+    </div>`;
+
+  const calHtml = buildRevenueCalendar(revMap, now);
+
+  document.getElementById('sale-goals-content').innerHTML = `
+    <div class="hero-banner" style="background:linear-gradient(135deg,#3b1f6e,#6d3fc0);">
+      <div class="hero-greeting">Mục tiêu & Doanh số</div>
+      <div class="hero-name">${m.name}</div>
+      <div class="hero-date">${monthLabel}</div>
+    </div>
+    <div style="padding:0 16px 80px;">
+      ${formHtml}
+      <p class="section-title">Doanh số tháng này</p>
+      <div class="card" style="margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-size:13px; color:var(--gray-500);">Tổng tháng</span>
+          <span style="font-size:20px; font-weight:800; color:#7c3aed;">${totalRev.toLocaleString('vi-VN')}đ</span>
+        </div>
+        ${calHtml}
+      </div>
+    </div>`;
+}
+
+function buildRevenueCalendar(revMap, now) {
+  const year = now.getFullYear(), month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayDate = now.getDate();
+  const dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
+  let html = `<div class="rev-calendar">`;
+  dayNames.forEach(d => html += `<div class="rev-cal-header">${d}</div>`);
+  for (let i=0; i<firstDay; i++) html += `<div class="rev-cal-day empty"></div>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const dk = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const rev = revMap[dk];
+    const isToday = d === todayDate;
+    const hasData = rev != null;
+    html += `<div class="rev-cal-day${hasData?' has-data':''}${isToday?' today':''}">
+      <div class="rev-cal-day-num">${d}</div>
+      ${hasData ? `<div class="rev-cal-day-val">${formatRevenue(rev)}</div>` : ''}
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function submitGoal() {
+  const mk = monthKey();
+  const goal = {};
+  GOAL_KPI_DEFS.forEach(k => { const v = document.getElementById('goal-'+k.id)?.value; goal[k.id] = v !== '' ? Number(v) : null; });
+  goal.revenue_target = Number(document.getElementById('goal-revenue')?.value || 0) || null;
+  goal.notes = document.getElementById('goal-notes')?.value.trim();
+  goal.status = 'pending';
+  goal.leaderNote = getMemberGoal(currentUser.id, mk)?.leaderNote || '';
+  goal.submittedAt = new Date().toISOString();
+  setMemberGoal(currentUser.id, mk, goal);
+  toast('Đã gửi mục tiêu cho Leader!', 'success');
+  buildSaleGoals();
+  updateGoalsBadge();
+}
+
+function resetGoalForEdit() {
+  const mk = monthKey();
+  const goal = getMemberGoal(currentUser.id, mk);
+  if (goal) { goal.status = 'pending'; setMemberGoal(currentUser.id, mk, goal); }
+  buildSaleGoals();
+}
+
+// ─────────────────────────────────────────
+// MANAGER: GOALS PAGE
+// ─────────────────────────────────────────
+let reviewingGoalMemberId = null;
+
+function buildMgrGoals() {
+  const mk = monthKey();
+  const now = new Date();
+  const monthLabel = now.toLocaleDateString('vi-VN', { month:'long', year:'numeric' });
+
+  const statusLabel = { pending:'⏳ Chờ duyệt', approved:'✅ Đã duyệt', revision:'✏️ Cần sửa' };
+  const statusClass = { pending:'goal-status-pending', approved:'goal-status-approved', revision:'goal-status-revision' };
+
+  const memberCards = MEMBERS.map(m => {
+    const goal = getMemberGoal(m.id, mk);
+    const revMap = getMonthRevenue(m.id);
+    const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
+    const st = goal?.status;
+    return `
+      <div class="card" style="margin-bottom:10px; cursor:pointer;" onclick="openGoalReview('${m.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-weight:700; font-size:15px;">${m.name}</div>
+          ${st ? `<span class="goal-status-badge ${statusClass[st]}">${statusLabel[st]}</span>` : '<span style="font-size:12px;color:var(--gray-400);">Chưa đặt mục tiêu</span>'}
+        </div>
+        ${goal ? `<div class="goal-kpi-grid">
+          ${GOAL_KPI_DEFS.map(k => goal[k.id] != null ? `<div style="font-size:12px;color:var(--gray-500);">${k.label.split('–')[0].trim()}: <strong style="color:${k.color}">${goal[k.id]}</strong></div>` : '').join('')}
+        </div>` : ''}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <span style="font-size:12px; color:var(--gray-400);">Doanh số tháng</span>
+          <span style="font-size:14px; font-weight:700; color:#7c3aed;">${totalRev.toLocaleString('vi-VN')}đ</span>
+        </div>
+        ${buildRevenueCalendar(revMap, now)}
+      </div>`;
+  }).join('');
+
+  document.getElementById('mgr-goals-content').innerHTML = `
+    <div class="hero-banner" style="background:linear-gradient(135deg,#3b1f6e,#6d3fc0);">
+      <div class="hero-greeting">Mục tiêu & Doanh số</div>
+      <div class="hero-name">Toàn Team</div>
+      <div class="hero-date">${monthLabel}</div>
+    </div>
+    <div style="padding:12px 16px 80px;">
+      <p class="section-title">Mục tiêu từng thành viên</p>
+      ${memberCards}
+    </div>`;
+}
+
+function openGoalReview(memberId) {
+  const mk = monthKey();
+  const goal = getMemberGoal(memberId, mk);
+  const m = memberById(memberId);
+  if (!goal) { toast('Thành viên chưa đặt mục tiêu', 'error'); return; }
+  reviewingGoalMemberId = memberId;
+  document.getElementById('modal-goal-review-title').textContent = `Duyệt mục tiêu – ${m.name}`;
+  document.getElementById('goal-review-note').value = goal.leaderNote || '';
+  document.getElementById('modal-goal-review-content').innerHTML = `
+    <div class="goal-kpi-grid">
+      ${GOAL_KPI_DEFS.map(k => goal[k.id] != null ? `
+        <div class="goal-kpi-card" style="border-left:3px solid ${k.color}">
+          <div class="goal-kpi-label">${k.label}</div>
+          <div class="goal-kpi-val" style="color:${k.color}">${goal[k.id]}</div>
+        </div>` : '').join('')}
+    </div>
+    ${goal.revenue_target ? `<div style="font-size:13px; margin-bottom:8px;">🎯 Doanh số mục tiêu: <strong>${goal.revenue_target.toLocaleString('vi-VN')}đ</strong></div>` : ''}
+    ${goal.notes ? `<div style="font-size:13px; color:var(--gray-600); margin-bottom:8px; background:var(--gray-50); padding:8px; border-radius:8px;">"${goal.notes}"</div>` : ''}`;
+  openModal('modal-goal-review');
+}
+
+function reviewGoal(status) {
+  if (!reviewingGoalMemberId) return;
+  const mk = monthKey();
+  const goal = getMemberGoal(reviewingGoalMemberId, mk);
+  if (!goal) return;
+  goal.status = status;
+  goal.leaderNote = document.getElementById('goal-review-note')?.value.trim();
+  goal.reviewedAt = new Date().toISOString();
+  setMemberGoal(reviewingGoalMemberId, mk, goal);
+  closeModal('modal-goal-review');
+  buildMgrGoals();
+  toast(status === 'approved' ? 'Đã chấp nhận mục tiêu!' : 'Đã gửi yêu cầu chỉnh sửa!', 'success');
+  updateGoalsBadge();
+}
+
+function updateGoalsBadge() {
+  const mk = monthKey();
+  const pending = MEMBERS.filter(m => getMemberGoal(m.id, mk)?.status === 'pending').length;
+  const badge = document.getElementById('nav-badge-goals');
+  if (badge) { badge.textContent = pending; badge.style.display = pending ? 'flex' : 'none'; }
+}
+
 // DEEP LINK: ?user=xxx
 // ─────────────────────────────────────────
 function checkDeepLink() {
