@@ -875,11 +875,7 @@
     <p class="text-xs text-gray mt-8">* Lịch tự động chạy khi thiết bị của quản lý đang mở ứng dụng này.</p>
   </div>
 
-  <p class="section-title">Số điện thoại đăng nhập</p>
-  <div class="card" id="phone-settings">
-    <p class="text-xs text-gray mb-8">Mỗi người dùng SĐT này để đăng nhập vào app.</p>
-  </div>
-  <button class="btn btn-ghost btn-full mt-4" onclick="savePhoneSettings()" style="margin-bottom:12px;">Lưu SĐT</button>
+  <div id="phone-settings" style="display:none;"></div>
 
   <p class="section-title">Link cá nhân từng sale</p>
   <div class="card" id="personal-links"></div>
@@ -1666,43 +1662,45 @@ function buildManagerSettings() {
   const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
 
   // ── Member management card ──
+  const phoneMap = getPhoneMap();
   document.getElementById('member-mgmt-card').innerHTML = `
     <div class="card-header">
       <div class="card-title">👥 Danh sách sale (${MEMBERS.length} người)</div>
     </div>
+    <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">Nhập SĐT để thành viên đăng nhập bằng số điện thoại.</div>
+
+    <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:2px solid rgba(99,102,241,0.12);">
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px;">📱 SĐT của Leader (bạn)</div>
+      <input class="form-input" type="tel" id="phone-manager" placeholder="Số điện thoại của bạn" value="${phoneMap.manager||''}" style="font-size:14px;" />
+    </div>
+
     <div id="member-list-rows">
       ${MEMBERS.map(m => `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(99,102,241,0.08);">
-          <div class="avatar avatar-sm" style="background:${m.color};flex-shrink:0;">${initials(m.name)}</div>
-          <div style="flex:1;font-size:14px;font-weight:700;color:var(--primary-dark);">${m.name}</div>
-          <button class="btn btn-ghost btn-sm" onclick="renameMember('${m.id}')" style="padding:5px 10px;font-size:12px;">✏️ Đổi tên</button>
-          <button onclick="removeMember('${m.id}')" style="background:rgba(244,63,94,0.1);border:none;border-radius:8px;padding:6px 10px;color:#be123c;font-size:12px;font-weight:700;cursor:pointer;">🗑 Xoá</button>
+        <div style="padding:12px 0;border-bottom:1px solid rgba(99,102,241,0.08);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div class="avatar avatar-sm" style="background:${m.color};flex-shrink:0;">${initials(m.name)}</div>
+            <div style="flex:1;font-size:14px;font-weight:800;color:var(--primary-dark);">${m.name}</div>
+            <button class="btn btn-ghost btn-sm" onclick="renameMember('${m.id}')" style="padding:5px 10px;font-size:12px;">✏️</button>
+            <button onclick="removeMember('${m.id}')" style="background:rgba(244,63,94,0.1);border:none;border-radius:8px;padding:6px 10px;color:#be123c;font-size:12px;font-weight:700;cursor:pointer;">🗑</button>
+          </div>
+          <input class="form-input" type="tel" id="phone-${m.id}" placeholder="SĐT đăng nhập của ${m.name}" value="${phoneMap[m.id]||''}" style="font-size:14px;" />
         </div>`).join('')}
     </div>
-    <div style="margin-top:14px;display:flex;gap:8px;">
-      <input id="new-member-name" class="form-input" placeholder="Tên thành viên mới..." style="flex:1;" onkeydown="if(event.key==='Enter')addMember(this.value)" />
-      <button class="btn btn-primary" onclick="addMember(document.getElementById('new-member-name').value);document.getElementById('new-member-name').value=''">+ Thêm</button>
+
+    <button class="btn btn-primary btn-full" onclick="saveMemberPhones()" style="margin-top:14px;margin-bottom:14px;">💾 Lưu số điện thoại</button>
+
+    <div style="border-top:1.5px dashed rgba(99,102,241,0.15);padding-top:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:8px;">THÊM THÀNH VIÊN MỚI</div>
+      <div style="display:flex;gap:8px;">
+        <input id="new-member-name" class="form-input" placeholder="Tên thành viên mới..." style="flex:1;" onkeydown="if(event.key==='Enter'){addMember(this.value);this.value=''}" />
+        <button class="btn btn-primary" onclick="addMember(document.getElementById('new-member-name').value);document.getElementById('new-member-name').value=''">+ Thêm</button>
+      </div>
     </div>`;
 
   document.getElementById('tg-token').value = cfg.token || '';
   document.getElementById('tg-leader-id').value = cfg.leaderId || '';
 
-  // Phone settings
-  const phoneMap = getPhoneMap();
-  document.getElementById('phone-settings').innerHTML = `
-    <p class="text-xs text-gray mb-8">Mỗi người dùng SĐT này để đăng nhập vào app.</p>
-    <div class="form-group" style="margin-bottom:10px;">
-      <label class="form-label">SĐT của Leader (bạn)</label>
-      <input class="form-input" type="tel" id="phone-manager" placeholder="SĐT của bạn" value="${phoneMap.manager||''}" />
-    </div>
-    ${MEMBERS.map(m => `
-      <div class="form-group" style="margin-bottom:10px;">
-        <label class="form-label">
-          <span class="avatar" style="background:${m.color};display:inline-flex;vertical-align:middle;margin-right:6px;width:20px;height:20px;font-size:9px;">${initials(m.name)}</span>
-          ${m.name}
-        </label>
-        <input class="form-input" type="tel" id="phone-${m.id}" placeholder="SĐT ${m.name}" value="${phoneMap[m.id]||''}" />
-      </div>`).join('')}`;
+  // Phone settings now inside member-mgmt-card above
 
   // chat id fields
   document.getElementById('tg-chat-ids').innerHTML = `
@@ -1788,12 +1786,13 @@ function copyLink(memberId) {
   });
 }
 
-function savePhoneSettings() {
+function saveMemberPhones() {
   const map = { manager: document.getElementById('phone-manager')?.value.trim() || '' };
   MEMBERS.forEach(m => { map[m.id] = document.getElementById('phone-'+m.id)?.value.trim() || ''; });
   savePhoneMap(map);
   toast('Đã lưu số điện thoại!', 'success');
 }
+function savePhoneSettings() { saveMemberPhones(); }
 
 function clearAllData() {
   if (!confirm('Xóa toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
