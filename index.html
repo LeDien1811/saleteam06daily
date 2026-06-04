@@ -805,6 +805,11 @@
 
 <!-- MANAGER: CÀI ĐẶT / TELEGRAM -->
 <div class="page" id="page-mgr-settings">
+  <p class="section-title">Quản Lý Thành Viên</p>
+  <div class="card" id="member-mgmt-card">
+    <!-- rendered by buildManagerSettings() -->
+  </div>
+
   <p class="section-title">Thông Báo Telegram</p>
   <div class="tg-box">
     <div class="tg-box-title">
@@ -1055,13 +1060,23 @@
 // ─────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────
-const MEMBERS = [
-  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale', color: '#1a2b4a', phone: '' },
-  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale', color: '#2a3f6a', phone: '' },
-  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale', color: '#f57c20', phone: '' },
-  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale', color: '#d96910', phone: '' },
-  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale', color: '#c25c08', phone: '' },
+const MEMBERS_DEFAULT = [
+  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale', color: '#6366f1', phone: '' },
+  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale', color: '#f43f5e', phone: '' },
+  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale', color: '#f59e0b', phone: '' },
+  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale', color: '#10b981', phone: '' },
+  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale', color: '#a855f7', phone: '' },
 ];
+const MEMBER_COLORS = ['#6366f1','#f43f5e','#f59e0b','#10b981','#a855f7','#06b6d4','#ec4899','#84cc16','#f97316','#14b8a6'];
+function getMembersStore() {
+  const raw = localStorage.getItem('dsm_members');
+  return raw ? JSON.parse(raw) : MEMBERS_DEFAULT;
+}
+function saveMembersStore(arr) {
+  localStorage.setItem('dsm_members', JSON.stringify(arr));
+  MEMBERS.splice(0, MEMBERS.length, ...arr);
+}
+let MEMBERS = getMembersStore();
 const LEADER_PHONE_KEY = 'dsm_leader_phone';
 function getPhoneMap() {
   const cfg = JSON.parse(localStorage.getItem('dsm_phones') || '{}');
@@ -1618,8 +1633,56 @@ function saveFeedback() {
 // ─────────────────────────────────────────
 // MANAGER: SETTINGS
 // ─────────────────────────────────────────
+// ── MEMBER MANAGEMENT ──
+function addMember(name) {
+  name = name.trim();
+  if (!name) return toast('Vui lòng nhập tên thành viên', 'error');
+  const arr = getMembersStore();
+  const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '-' + Date.now().toString(36);
+  const color = MEMBER_COLORS[arr.length % MEMBER_COLORS.length];
+  arr.push({ id, name, role: 'sale', color, phone: '' });
+  saveMembersStore(arr);
+  buildManagerSettings();
+  toast('Đã thêm ' + name, 'success');
+}
+function removeMember(id) {
+  const m = memberById(id);
+  if (!confirm('Xoá tài khoản ' + (m?.name||id) + '? Dữ liệu báo cáo của họ vẫn được giữ lại.')) return;
+  const arr = getMembersStore().filter(x => x.id !== id);
+  saveMembersStore(arr);
+  buildManagerSettings();
+  toast('Đã xoá ' + (m?.name||id));
+}
+function renameMember(id) {
+  const m = memberById(id);
+  const newName = prompt('Đổi tên cho ' + (m?.name||id) + ':', m?.name||'');
+  if (!newName || !newName.trim()) return;
+  const arr = getMembersStore().map(x => x.id === id ? { ...x, name: newName.trim() } : x);
+  saveMembersStore(arr);
+  buildManagerSettings();
+  toast('Đã đổi tên thành ' + newName.trim(), 'success');
+}
 function buildManagerSettings() {
   const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
+
+  // ── Member management card ──
+  document.getElementById('member-mgmt-card').innerHTML = `
+    <div class="card-header">
+      <div class="card-title">👥 Danh sách sale (${MEMBERS.length} người)</div>
+    </div>
+    <div id="member-list-rows">
+      ${MEMBERS.map(m => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(99,102,241,0.08);">
+          <div class="avatar avatar-sm" style="background:${m.color};flex-shrink:0;">${initials(m.name)}</div>
+          <div style="flex:1;font-size:14px;font-weight:700;color:var(--primary-dark);">${m.name}</div>
+          <button class="btn btn-ghost btn-sm" onclick="renameMember('${m.id}')" style="padding:5px 10px;font-size:12px;">✏️ Đổi tên</button>
+          <button onclick="removeMember('${m.id}')" style="background:rgba(244,63,94,0.1);border:none;border-radius:8px;padding:6px 10px;color:#be123c;font-size:12px;font-weight:700;cursor:pointer;">🗑 Xoá</button>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <input id="new-member-name" class="form-input" placeholder="Tên thành viên mới..." style="flex:1;" onkeydown="if(event.key==='Enter')addMember(this.value)" />
+      <button class="btn btn-primary" onclick="addMember(document.getElementById('new-member-name').value);document.getElementById('new-member-name').value=''">+ Thêm</button>
+    </div>`;
 
   document.getElementById('tg-token').value = cfg.token || '';
   document.getElementById('tg-leader-id').value = cfg.leaderId || '';
