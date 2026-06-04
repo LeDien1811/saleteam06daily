@@ -712,6 +712,15 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:4px;">
+    <div class="card-title mb-8">Chat ID của Leader (bạn)</div>
+    <div class="form-group">
+      <label class="form-label">Chat ID Telegram của Leader</label>
+      <input class="form-input" type="text" id="tg-leader-id" placeholder="VD: 5288406482" />
+      <p class="text-xs text-gray mt-4">Vào <strong>@userinfobot</strong> trên Telegram → gửi /start → lấy ID của bạn</p>
+    </div>
+  </div>
+
   <p class="section-title">Chat ID từng thành viên</p>
   <div class="card" id="tg-chat-ids"></div>
 
@@ -1354,6 +1363,7 @@ function buildManagerSettings() {
   const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
 
   document.getElementById('tg-token').value = cfg.token || '';
+  document.getElementById('tg-leader-id').value = cfg.leaderId || '';
 
   // chat id fields
   document.getElementById('tg-chat-ids').innerHTML = `
@@ -1391,8 +1401,37 @@ function saveTgSettings() {
   MEMBERS.forEach(m => {
     chatIds[m.id] = document.getElementById('tg-id-' + m.id)?.value.trim() || '';
   });
-  localStorage.setItem('dsm_tg', JSON.stringify({ token, chatIds }));
+  const leaderId = document.getElementById('tg-leader-id')?.value.trim() || '';
+  localStorage.setItem('dsm_tg', JSON.stringify({ token, chatIds, leaderId }));
   toast('Đã lưu cài đặt Telegram', 'success');
+}
+
+async function notifyLeader(type, memberId, extraData) {
+  const cfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
+  if (!cfg.token || !cfg.leaderId) return;
+  const m = memberById(memberId);
+  const now = new Date();
+  const timeStr = formatTime(now);
+  const dateStr = formatDate(now);
+  let text = '';
+
+  if (type === 'report') {
+    const r = extraData;
+    const kpiLine = [
+      r.data_moi != null ? `Data mới: <b>${r.data_moi}</b>` : '',
+      r.khtn != null     ? `KHTN: <b>${r.khtn}</b>` : '',
+      r.cho_chot != null ? `Chờ chốt: <b>${r.cho_chot}</b>` : '',
+      r.mua_hang != null ? `Lên đơn: <b>${r.mua_hang}</b>` : '',
+    ].filter(Boolean).join(' | ');
+    const revLine = r.revenue != null ? `\n💰 Doanh số: <b>${r.revenue.toLocaleString('vi-VN')}đ</b>` : '';
+    const tamsyLine = r.tamsự ? `\n💬 Tâm sự: ${r.tamsự.slice(0,100)}${r.tamsự.length>100?'...':''}` : '';
+    const hoTroLine = r.ho_tro ? `\n🙋 Cần hỗ trợ: ${r.ho_tro.slice(0,100)}${r.ho_tro.length>100?'...':''}` : '';
+    text = `📋 <b>${m.name}</b> vừa nộp báo cáo (${timeStr} – ${dateStr})\n\n${kpiLine}${revLine}${tamsyLine}${hoTroLine}`;
+  } else if (type === 'goal') {
+    text = `🎯 <b>${m.name}</b> vừa gửi mục tiêu tháng để duyệt (${timeStr})\n\nVào app để xem và duyệt.`;
+  }
+
+  if (text) await sendTgMessage(cfg.token, cfg.leaderId, text);
 }
 
 function toggleAutoSchedule(which) {
@@ -1803,6 +1842,7 @@ function submitReport() {
   saveTodayData(store, key, day);
   buildSaleReport();
   toast('Đã nộp báo cáo thành công!', 'success');
+  notifyLeader('report', currentUser.id, day.reports[currentUser.id]);
 }
 
 // ─────────────────────────────────────────
@@ -2069,6 +2109,7 @@ function submitGoal() {
   toast('Đã gửi mục tiêu cho Leader!', 'success');
   buildSaleGoals();
   updateGoalsBadge();
+  notifyLeader('goal', currentUser.id);
 }
 
 function resetGoalForEdit() {
