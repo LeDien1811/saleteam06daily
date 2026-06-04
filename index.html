@@ -643,16 +643,37 @@
 <!-- ===== LOGIN PAGE ===== -->
 <div id="page-login">
   <div class="login-logo">📊</div>
-  <div class="login-title">Quản Lý Sale Hàng Ngày</div>
-  <div class="login-sub">Chọn vai trò của bạn để tiếp tục</div>
+  <div class="login-title">Sale Daily – Team 06</div>
+  <div class="login-sub">Nhập số điện thoại của bạn để vào app</div>
   <div class="login-card">
-    <p class="form-label" style="text-align:center; font-size:14px; margin-bottom:12px;">Bạn là ai?</p>
-    <button class="btn btn-secondary btn-full mb-8" onclick="loginAs('manager')" style="font-size:15px; padding:14px;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      Quản Lý / Leader
+    <div class="form-group">
+      <label class="form-label" style="text-align:center; display:block; font-size:15px; margin-bottom:10px;">Số điện thoại</label>
+      <input class="form-input" type="tel" id="login-phone"
+        placeholder="VD: 0912345678"
+        style="font-size:20px; text-align:center; letter-spacing:2px; padding:14px;"
+        oninput="clearLoginError()"
+        onkeydown="if(event.key==='Enter') doLogin()" />
+      <div id="login-error" style="color:var(--danger); font-size:13px; text-align:center; margin-top:6px; display:none;">Số điện thoại không đúng. Liên hệ Leader để được thêm vào.</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" style="font-size:16px; padding:15px; margin-top:4px;">
+      Vào App
     </button>
-    <div class="divider">hoặc chọn thành viên</div>
-    <ul class="member-pick-list" id="member-pick-list"></ul>
+    <div style="margin-top:16px; background:#e8f4fd; border-radius:10px; padding:12px; border:1.5px solid #2e9af3;">
+      <div style="font-size:12px; font-weight:700; color:#1a6fa8; margin-bottom:6px;">📱 Dùng tốt nhất trên điện thoại</div>
+      <div style="font-size:12px; color:#1a6fa8; line-height:1.7;">
+        • Nhấn <strong>Chia sẻ</strong> → <strong>Thêm vào màn hình chính</strong> để dùng như app<br>
+        • App sẽ nhắc việc lúc <strong>8:30</strong> và nhắc báo cáo lúc <strong>21:30</strong> qua Telegram
+      </div>
+    </div>
+    <div id="login-dev-section" style="margin-top:12px; border-top:1px solid var(--gray-200); padding-top:10px;">
+      <details>
+        <summary style="font-size:11px; color:var(--gray-400); cursor:pointer; list-style:none;">Chưa có SĐT? Chọn thủ công</summary>
+        <div style="margin-top:8px;">
+          <button class="btn btn-ghost btn-sm btn-full mb-8" onclick="loginAs('manager')">Leader</button>
+          <ul class="member-pick-list" id="member-pick-list" style="margin-top:4px;"></ul>
+        </div>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -755,6 +776,12 @@
     <p class="text-xs text-gray mt-8">* Lịch tự động chạy khi thiết bị của quản lý đang mở ứng dụng này.</p>
   </div>
 
+  <p class="section-title">Số điện thoại đăng nhập</p>
+  <div class="card" id="phone-settings">
+    <p class="text-xs text-gray mb-8">Mỗi người dùng SĐT này để đăng nhập vào app.</p>
+  </div>
+  <button class="btn btn-ghost btn-full mt-4" onclick="savePhoneSettings()" style="margin-bottom:12px;">Lưu SĐT</button>
+
   <p class="section-title">Link cá nhân từng sale</p>
   <div class="card" id="personal-links"></div>
 
@@ -785,6 +812,11 @@
   <div id="mgr-goals-content"></div>
 </div>
 
+<!-- MANAGER: LỊCH BIỂU + NHẬT KÝ -->
+<div class="page" id="page-mgr-diary">
+  <div id="mgr-diary-content"></div>
+</div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
   <!-- Manager nav -->
@@ -806,6 +838,10 @@
         <span id="nav-badge-goals" class="nav-badge" style="display:none">0</span>
       </div>
       Mục Tiêu
+    </button>
+    <button class="nav-item" id="nav-mgr-diary" onclick="showPage('mgr-diary')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Nhật Ký
     </button>
     <button class="nav-item" id="nav-mgr-settings" onclick="showPage('mgr-settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -913,12 +949,29 @@
 // DATA
 // ─────────────────────────────────────────
 const MEMBERS = [
-  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale', color: '#1a2b4a' },
-  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale', color: '#2a3f6a' },
-  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale', color: '#f57c20' },
-  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale', color: '#d96910' },
-  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale', color: '#c25c08' },
+  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale', color: '#1a2b4a', phone: '' },
+  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale', color: '#2a3f6a', phone: '' },
+  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale', color: '#f57c20', phone: '' },
+  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale', color: '#d96910', phone: '' },
+  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale', color: '#c25c08', phone: '' },
 ];
+const LEADER_PHONE_KEY = 'dsm_leader_phone';
+function getPhoneMap() {
+  const cfg = JSON.parse(localStorage.getItem('dsm_phones') || '{}');
+  return cfg; // { memberId: phone, manager: phone }
+}
+function savePhoneMap(map) { localStorage.setItem('dsm_phones', JSON.stringify(map)); }
+function findUserByPhone(phone) {
+  const map = getPhoneMap();
+  const cleaned = phone.replace(/\D/g,'');
+  for (const [id, p] of Object.entries(map)) {
+    if (p && p.replace(/\D/g,'') === cleaned) {
+      if (id === 'manager') return { id:'manager', name:'Leader', role:'manager' };
+      return memberById(id);
+    }
+  }
+  return null;
+}
 
 const DEFAULT_TASKS = [
   { id: 1, title: 'Xử lí đơn hàng đang "CHỜ"', desc: 'Sáng: xe ghép lúc 9h | Chiều: 14h. Đơn Phú Lương trên 3tr có thể gọi xe máy giao các khung giờ khác.' },
@@ -1043,15 +1096,30 @@ function closeModal(id) {
 // ─────────────────────────────────────────
 function buildLoginPage() {
   const list = document.getElementById('member-pick-list');
-  list.innerHTML = MEMBERS.map(m => `
+  if (list) list.innerHTML = MEMBERS.map(m => `
     <li class="member-pick-item" onclick="loginAs('${m.id}')">
       <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
-      <div>
-        <div class="member-pick-name">${m.name}</div>
-      </div>
+      <div><div class="member-pick-name">${m.name}</div></div>
       <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
     </li>
   `).join('');
+  setTimeout(() => document.getElementById('login-phone')?.focus(), 100);
+}
+
+function doLogin() {
+  const phone = document.getElementById('login-phone')?.value.trim();
+  if (!phone) { showLoginError(); return; }
+  const user = findUserByPhone(phone);
+  if (!user) { showLoginError(); return; }
+  loginAs(user.id);
+}
+function showLoginError() {
+  const el = document.getElementById('login-error');
+  if (el) { el.style.display = 'block'; document.getElementById('login-phone')?.focus(); }
+}
+function clearLoginError() {
+  const el = document.getElementById('login-error');
+  if (el) el.style.display = 'none';
 }
 
 function loginAs(userId) {
@@ -1119,6 +1187,7 @@ function showPage(pageId) {
   if (pageId === 'sale-report') buildSaleReport();
   if (pageId === 'sale-goals') buildSaleGoals();
   if (pageId === 'mgr-goals') buildMgrGoals();
+  if (pageId === 'mgr-diary') buildMgrDiary();
 }
 
 // ─────────────────────────────────────────
@@ -1365,6 +1434,23 @@ function buildManagerSettings() {
   document.getElementById('tg-token').value = cfg.token || '';
   document.getElementById('tg-leader-id').value = cfg.leaderId || '';
 
+  // Phone settings
+  const phoneMap = getPhoneMap();
+  document.getElementById('phone-settings').innerHTML = `
+    <p class="text-xs text-gray mb-8">Mỗi người dùng SĐT này để đăng nhập vào app.</p>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label class="form-label">SĐT của Leader (bạn)</label>
+      <input class="form-input" type="tel" id="phone-manager" placeholder="SĐT của bạn" value="${phoneMap.manager||''}" />
+    </div>
+    ${MEMBERS.map(m => `
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">
+          <span class="avatar" style="background:${m.color};display:inline-flex;vertical-align:middle;margin-right:6px;width:20px;height:20px;font-size:9px;">${initials(m.name)}</span>
+          ${m.name}
+        </label>
+        <input class="form-input" type="tel" id="phone-${m.id}" placeholder="SĐT ${m.name}" value="${phoneMap[m.id]||''}" />
+      </div>`).join('')}`;
+
   // chat id fields
   document.getElementById('tg-chat-ids').innerHTML = `
     <div class="form-group" style="margin-bottom:0">
@@ -1447,6 +1533,13 @@ function copyLink(memberId) {
   navigator.clipboard.writeText(url).then(() => toast('Đã copy link ' + memberById(memberId).name, 'success')).catch(() => {
     prompt('Sao chép link:', url);
   });
+}
+
+function savePhoneSettings() {
+  const map = { manager: document.getElementById('phone-manager')?.value.trim() || '' };
+  MEMBERS.forEach(m => { map[m.id] = document.getElementById('phone-'+m.id)?.value.trim() || ''; });
+  savePhoneMap(map);
+  toast('Đã lưu số điện thoại!', 'success');
 }
 
 function clearAllData() {
@@ -2212,6 +2305,137 @@ function updateGoalsBadge() {
   const pending = MEMBERS.filter(m => getMemberGoal(m.id, mk)?.status === 'pending').length;
   const badge = document.getElementById('nav-badge-goals');
   if (badge) { badge.textContent = pending; badge.style.display = pending ? 'flex' : 'none'; }
+}
+
+// ─────────────────────────────────────────
+// MANAGER: DIARY + SCHEDULE
+// ─────────────────────────────────────────
+const LEADER_SCHEDULE = [
+  { time:'07:30', label:'Xem báo cáo hôm qua, review KPI', color:'#1a2b4a' },
+  { time:'08:00', label:'Chuẩn bị nội dung giao việc sáng', color:'#1a2b4a' },
+  { time:'08:30', label:'Gửi việc buổi sáng cho team (Telegram)', color:'#f57c20' },
+  { time:'09:00', label:'Hỗ trợ & theo dõi team làm việc', color:'#2a6a3f' },
+  { time:'11:30', label:'Check tiến độ buổi sáng từng sale', color:'#2a6a3f' },
+  { time:'13:30', label:'Họp/trao đổi cá nhân (nếu cần)', color:'#7c3aed' },
+  { time:'14:00', label:'Tiếp tục hỗ trợ & giám sát', color:'#2a6a3f' },
+  { time:'17:00', label:'Review tổng kết chiều, check doanh số', color:'#d97706' },
+  { time:'20:00', label:'Xem trước báo cáo nộp về', color:'#dc2626' },
+  { time:'21:30', label:'Nhắc team nộp báo cáo cuối ngày', color:'#f57c20' },
+  { time:'22:00', label:'Viết nhật ký, review ngày hôm nay', color:'#6d3fc0' },
+];
+
+const LEADER_CHECKLIST = [
+  'Đã đọc toàn bộ báo cáo hôm nay',
+  'Đã phản hồi / nhận xét từng sale',
+  'Đã kiểm tra nhịp độ doanh số team',
+  'Đã xem tâm sự & đề xuất của sale',
+  'Đã duyệt mục tiêu (nếu có chờ duyệt)',
+  'Đã note lại vấn đề cần giải quyết mai',
+  'Đã chuẩn bị nội dung giao việc ngày mai',
+];
+
+function getDiaryStore() { return JSON.parse(localStorage.getItem('dsm_diary') || '{}'); }
+function saveDiaryStore(d) { localStorage.setItem('dsm_diary', JSON.stringify(d)); }
+function getLeaderChecklist() { return JSON.parse(localStorage.getItem('dsm_lcheck') || '{}'); }
+function saveLeaderChecklist(d) { localStorage.setItem('dsm_lcheck', JSON.stringify(d)); }
+
+function buildMgrDiary() {
+  const now = new Date();
+  const dk = todayKey();
+  const timeStr = formatTime(now);
+  const diary = getDiaryStore();
+  const lchecks = getLeaderChecklist();
+  const todayCheck = lchecks[dk] || {};
+  const doneCnt = LEADER_CHECKLIST.filter((_, i) => todayCheck[i]).length;
+
+  // Schedule: highlight current time block
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const scheduleHtml = LEADER_SCHEDULE.map((s, i) => {
+    const [sh, sm] = s.time.split(':').map(Number);
+    const nextTime = LEADER_SCHEDULE[i+1];
+    const [nh, nm] = nextTime ? nextTime.time.split(':').map(Number) : [23,59];
+    const sMin = sh*60+sm, nMin = nh*60+nm;
+    const isCurrent = nowMin >= sMin && nowMin < nMin;
+    return `
+      <div style="display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--gray-100);
+           ${isCurrent ? 'background:#fff9f0; border-radius:8px; padding:8px 10px; margin:0 -10px; border-bottom:none;' : ''}">
+        <div style="width:44px; flex-shrink:0; font-size:12px; font-weight:700; color:${isCurrent ? s.color : 'var(--gray-400)'}; padding-top:1px;">${s.time}</div>
+        <div style="flex:1; font-size:13px; font-weight:${isCurrent?'700':'400'}; color:${isCurrent ? s.color : 'var(--gray-700)'};">
+          ${isCurrent ? '▶ ' : ''}${s.label}
+        </div>
+      </div>`;
+  }).join('');
+
+  const checklistHtml = LEADER_CHECKLIST.map((item, i) => `
+    <div onclick="toggleLeaderCheck(${i})"
+      style="display:flex; align-items:center; gap:12px; padding:12px; background:#fff;
+             border-radius:12px; margin-bottom:8px; border:2px solid ${todayCheck[i]?'var(--success)':'var(--gray-200)'};
+             cursor:pointer; opacity:${todayCheck[i]?'0.65':'1'};">
+      <div style="width:24px; height:24px; border-radius:50%; flex-shrink:0;
+           background:${todayCheck[i]?'var(--success)':'var(--gray-200)'};
+           display:flex; align-items:center; justify-content:center;">
+        ${todayCheck[i]?`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`:''}
+      </div>
+      <span style="font-size:14px; font-weight:600; color:var(--navy); text-decoration:${todayCheck[i]?'line-through':'none'};">${item}</span>
+    </div>`).join('');
+
+  // Diary entries
+  const todayDiary = diary[dk] || '';
+  const pastEntries = Object.entries(diary).filter(([k]) => k !== dk).sort((a,b) => b[0].localeCompare(a[0])).slice(0, 7);
+  const pastHtml = pastEntries.length ? pastEntries.map(([k, txt]) => `
+    <div style="background:var(--gray-50); border-radius:10px; padding:12px; margin-bottom:8px;">
+      <div style="font-size:11px; color:var(--gray-400); font-weight:700; margin-bottom:4px;">${k}</div>
+      <div style="font-size:13px; color:var(--gray-700); white-space:pre-wrap; line-height:1.6;">${txt.slice(0,200)}${txt.length>200?'...':''}</div>
+    </div>`).join('') : '<div style="font-size:13px; color:var(--gray-400); text-align:center; padding:16px 0;">Chưa có nhật ký nào</div>';
+
+  document.getElementById('mgr-diary-content').innerHTML = `
+    <div class="hero-banner" style="background:linear-gradient(135deg,#1a2b4a,#3b1f6e);">
+      <div class="hero-greeting">Lịch biểu & Nhật ký</div>
+      <div class="hero-name">Leader</div>
+      <div class="hero-date">${formatDate(now)} · ${timeStr}</div>
+    </div>
+    <div style="padding:12px 16px 100px;">
+      <p class="section-title">Lịch biểu hôm nay</p>
+      <div class="card" style="padding:10px 16px; margin-bottom:4px;">${scheduleHtml}</div>
+
+      <p class="section-title" style="margin-top:16px;">Checklist cuối ngày (${doneCnt}/${LEADER_CHECKLIST.length})</p>
+      <div style="background:var(--gray-50); border-radius:10px; overflow:hidden; padding:8px; margin-bottom:4px;">
+        <div class="progress-bar" style="height:6px; margin-bottom:10px;">
+          <div class="progress-fill" style="width:${Math.round(doneCnt/LEADER_CHECKLIST.length*100)}%;"></div>
+        </div>
+        ${checklistHtml}
+      </div>
+
+      <p class="section-title" style="margin-top:16px;">Nhật ký hôm nay</p>
+      <div class="card" style="margin-bottom:8px;">
+        <textarea id="diary-today" placeholder="Hôm nay bạn suy nghĩ gì? Đội mình đang ở đâu? Điều gì cần thay đổi?..."
+          style="width:100%; border:none; outline:none; font-size:14px; line-height:1.8; min-height:140px; resize:vertical; font-family:inherit; color:var(--gray-800);"
+          oninput="saveDiaryToday()">${todayDiary}</textarea>
+      </div>
+
+      <p class="section-title">Nhật ký trước đó</p>
+      ${pastHtml}
+    </div>`;
+}
+
+function toggleLeaderCheck(idx) {
+  const dk = todayKey();
+  const lchecks = getLeaderChecklist();
+  if (!lchecks[dk]) lchecks[dk] = {};
+  lchecks[dk][idx] = !lchecks[dk][idx];
+  saveLeaderChecklist(lchecks);
+  buildMgrDiary();
+}
+
+let diaryTimer = null;
+function saveDiaryToday() {
+  clearTimeout(diaryTimer);
+  diaryTimer = setTimeout(() => {
+    const txt = document.getElementById('diary-today')?.value || '';
+    const diary = getDiaryStore();
+    diary[todayKey()] = txt;
+    saveDiaryStore(diary);
+  }, 800);
 }
 
 // DEEP LINK: ?user=xxx
