@@ -1442,15 +1442,43 @@ function renderReviewList() {
           </div>` : ''}
         </div>
 
-        <!-- Text fields -->
-        <div style="padding:12px 14px;">
-          ${report.issues ? `<div style="margin-bottom:8px;padding:9px 11px;background:#fff7ed;border-radius:10px;border-left:3px solid #f57c20;"><div style="font-size:10px;font-weight:700;color:#f57c20;margin-bottom:3px;">⚠️ KHÓ KHĂN</div><div style="font-size:13px;color:var(--gray-700);">${report.issues}</div></div>` : ''}
-          ${(report.kh_roi_bo != null||report.hang_ton) ? `<div style="margin-bottom:8px;padding:9px 11px;background:#faf5ff;border-radius:10px;border-left:3px solid #7e22ce;"><div style="font-size:10px;font-weight:700;color:#7e22ce;margin-bottom:3px;">🔄 KH RỜI BỎ & HÀNG TỒN</div>${report.kh_roi_bo!=null?`<div style="font-size:13px;">Rà lại <b style="color:#7e22ce">${report.kh_roi_bo}</b> KH rời bỏ</div>`:''}${report.hang_ton?`<div style="font-size:12px;color:var(--gray-500);margin-top:3px;">${report.hang_ton}</div>`:''}</div>` : ''}
-          ${report.tamsự ? `<div style="margin-bottom:8px;padding:9px 11px;background:#fff8f0;border-radius:10px;border-left:3px solid var(--orange);"><div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:3px;">💬 TÂM SỰ</div><div style="font-size:13px;white-space:pre-wrap;">${report.tamsự}</div></div>` : ''}
-          ${report.dexuat ? `<div style="margin-bottom:8px;padding:9px 11px;background:#f0fdf4;border-radius:10px;border-left:3px solid #16a34a;"><div style="font-size:10px;font-weight:700;color:#16a34a;margin-bottom:3px;">💡 ĐỀ XUẤT</div><div style="font-size:13px;white-space:pre-wrap;">${report.dexuat}</div></div>` : ''}
-          ${report.ho_tro ? `<div style="margin-bottom:8px;padding:9px 11px;background:#f0f9ff;border-radius:10px;border-left:3px solid #0891b2;"><div style="font-size:10px;font-weight:700;color:#0891b2;margin-bottom:3px;">🙋 CẦN LEADER HỖ TRỢ</div><div style="font-size:13px;white-space:pre-wrap;">${report.ho_tro}</div></div>` : ''}
-          ${feedback ? `<div style="margin-bottom:8px;padding:9px 11px;background:#f0fdf4;border-radius:10px;border:1.5px solid #86efac;"><div style="font-size:10px;font-weight:700;color:#16a34a;margin-bottom:3px;">✍️ NHẬN XÉT CỦA LEADER</div><div style="font-size:13px;color:var(--navy);">${feedback}</div></div>` : ''}
-          <button style="width:100%;padding:9px;border:1.5px solid #e2e8f0;border-radius:10px;background:transparent;color:var(--gray-500);font-size:13px;cursor:pointer;font-weight:600;" onclick="openFeedbackModal('${m.id}')">
+        <!-- Text fields — always shown -->
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+
+          <div style="padding:10px 12px;background:#fff8f0;border-radius:10px;border-left:3px solid #f57c20;">
+            <div style="font-size:10px;font-weight:700;color:#f57c20;margin-bottom:4px;">⚠️ KHÓ KHĂN / VẤN ĐỀ</div>
+            <div style="font-size:13px;color:${report.issues?'var(--gray-700)':'var(--gray-300)'};white-space:pre-wrap;">${report.issues||'Không có vấn đề'}</div>
+          </div>
+
+          <div style="padding:10px 12px;background:#fff8f0;border-radius:10px;border-left:3px solid var(--orange);">
+            <div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:4px;">💬 TÂM SỰ / CHIA SẺ</div>
+            <div style="font-size:13px;color:${report.tamsự?'var(--gray-700)':'var(--gray-300)'};white-space:pre-wrap;">${report.tamsự||'Chưa chia sẻ'}</div>
+          </div>
+
+          <div style="padding:10px 12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #16a34a;">
+            <div style="font-size:10px;font-weight:700;color:#16a34a;margin-bottom:4px;">💡 ĐỀ XUẤT</div>
+            <div style="font-size:13px;color:${report.dexuat?'var(--gray-700)':'var(--gray-300)'};white-space:pre-wrap;">${report.dexuat||'Chưa có đề xuất'}</div>
+          </div>
+
+          <div style="padding:10px 12px;background:#f0f9ff;border-radius:10px;border-left:3px solid #0891b2;">
+            <div style="font-size:10px;font-weight:700;color:#0891b2;margin-bottom:4px;">🙋 CẦN LEADER HỖ TRỢ</div>
+            <div style="font-size:13px;color:${report.ho_tro?'var(--gray-700)':'var(--gray-300)'};white-space:pre-wrap;">${report.ho_tro||'Không cần hỗ trợ thêm'}</div>
+          </div>
+
+          ${(report.kh_roi_bo != null||report.hang_ton) ? `
+          <div style="padding:10px 12px;background:#faf5ff;border-radius:10px;border-left:3px solid #7e22ce;">
+            <div style="font-size:10px;font-weight:700;color:#7e22ce;margin-bottom:4px;">🔄 KH RỜI BỎ & HÀNG TỒN</div>
+            ${report.kh_roi_bo!=null?`<div style="font-size:13px;">Rà lại <b style="color:#7e22ce">${report.kh_roi_bo}</b> KH rời bỏ${report.kh_roi_bo_action?' — '+report.kh_roi_bo_action:''}</div>`:''}
+            ${report.hang_ton?`<div style="font-size:12px;color:var(--gray-500);margin-top:3px;">${report.hang_ton}</div>`:''}
+          </div>` : ''}
+
+          ${feedback ? `
+          <div style="padding:10px 12px;background:#f0fdf4;border-radius:10px;border:1.5px solid #86efac;">
+            <div style="font-size:10px;font-weight:700;color:#16a34a;margin-bottom:4px;">✍️ NHẬN XÉT CỦA LEADER</div>
+            <div style="font-size:13px;color:var(--navy);">${feedback}</div>
+          </div>` : ''}
+
+          <button style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:transparent;color:var(--gray-500);font-size:13px;cursor:pointer;font-weight:600;" onclick="openFeedbackModal('${m.id}')">
             ${feedback ? '✏️ Sửa nhận xét' : '💬 Thêm nhận xét cho ' + m.name}
           </button>
         </div>
