@@ -836,11 +836,23 @@
 // DATA
 // ─────────────────────────────────────────
 const MEMBERS = [
-  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale-cuong', roleLabel: 'Sale Cứng',  color: '#1a2b4a' },
-  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale-cuong', roleLabel: 'Sale Cứng',  color: '#2a3f6a' },
-  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#f57c20' },
-  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#d96910' },
-  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale-moi',   roleLabel: 'Sale Mới',   color: '#c25c08' },
+  { id: 'thuy-trang',    name: 'Thuỳ Trang',    role: 'sale', color: '#1a2b4a' },
+  { id: 'hoang-phuong',  name: 'Hoàng Phương',  role: 'sale', color: '#2a3f6a' },
+  { id: 'huyen-trang',   name: 'Huyền Trang',   role: 'sale', color: '#f57c20' },
+  { id: 'thom-nguyen',   name: 'Thơm Nguyễn',   role: 'sale', color: '#d96910' },
+  { id: 'lan-anh',       name: 'Lan Anh',        role: 'sale', color: '#c25c08' },
+];
+
+const DEFAULT_TASKS = [
+  { id: 1, title: 'Xử lí đơn hàng đang "CHỜ"', desc: 'Sáng: xe ghép lúc 9h | Chiều: 14h. Đơn Phú Lương trên 3tr có thể gọi xe máy giao các khung giờ khác.' },
+  { id: 2, title: 'Tham gia hội nhóm gia dụng', desc: 'Tham gia nhiều nhất có thể để tạo môi trường tiếp cận KH mục tiêu.' },
+  { id: 3, title: 'Kết bạn fb/zalo kinh doanh gia dụng', desc: 'Kết bạn nhiều nhất có thể để tăng cơ hội tiếp cận KH.' },
+  { id: 4, title: 'Đăng bài facebook & zalo', desc: 'Đăng bài cá nhân, hội nhóm fb, nhóm báo giá zalo. Có thể kèm hình ảnh/video kho bãi, hàng hoá, hoạt động công ty.' },
+  { id: 5, title: 'Nhận data từ Getfly – gọi điện tư vấn', desc: 'Gọi điện tư vấn → chuyển sang zalo chăm sóc, theo dõi và chốt đơn.' },
+  { id: 6, title: 'Tìm kiếm KH chủ động', desc: 'Tìm KH qua Google Maps (tìm từ khoá → đơn vị đăng ký → gọi chào hàng, kết bạn zalo tư vấn báo giá) và đi thị trường offline.' },
+  { id: 7, title: 'Xuất VAT cho khách (nếu có)', desc: 'Xuất trong ngày đi đơn, tránh để lâu không xuất được nữa.' },
+  { id: 8, title: 'Họp hàng tuần', desc: 'Cập nhật tiến độ và bám sát mục tiêu.' },
+  { id: 9, title: 'Báo cáo cuối ngày', desc: 'Theo dõi và đánh giá kết quả làm việc, điều chỉnh kế hoạch phù hợp.' },
 ];
 
 function todayKey() {
@@ -1166,8 +1178,14 @@ function renderReviewList() {
           <span class="pill pill-green">Đã nộp</span>
         </div>
         <div class="review-body">
-          ${report.results ? `<div class="review-field"><div class="review-field-label">Kết quả đạt được</div><div class="review-field-value">${report.results}</div></div>` : ''}
-          ${report.done_tasks ? `<div class="review-field"><div class="review-field-label">Công việc hoàn thành</div><div class="review-field-value">${report.done_tasks}</div></div>` : ''}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            ${[
+              {id:'data_moi',label:'Data mới (PH)',target:30,color:'#1a2b4a'},
+              {id:'khtn',    label:'KHTN',         target:15,color:'#2a6a3f'},
+              {id:'cho_chot',label:'KH chờ chốt',  target:5, color:'#d97706'},
+              {id:'mua_hang',label:'Lên đơn',       target:2, color:'#dc2626'},
+            ].map(k => report[k.id] != null ? `<div style="background:var(--gray-50);border-radius:8px;padding:8px;border-left:3px solid ${k.color}"><div style="font-size:10px;color:var(--gray-500)">${k.label}</div><div style="font-size:20px;font-weight:800;color:${k.color}">${report[k.id]}<span style="font-size:11px;color:var(--gray-400)">/${k.target}</span></div></div>` : '').join('')}
+          </div>
           ${report.issues ? `<div class="review-field"><div class="review-field-label">Khó khăn / vấn đề</div><div class="review-field-value">${report.issues}</div></div>` : ''}
           ${report.tomorrow ? `<div class="review-field"><div class="review-field-label">Kế hoạch ngày mai</div><div class="review-field-value">${report.tomorrow}</div></div>` : ''}
           ${feedback ? `<div class="feedback-box"><div class="feedback-box-label">Nhận xét Leader</div><div style="font-size:14px; color:var(--navy);">${feedback}</div></div>` : ''}
@@ -1190,7 +1208,10 @@ function openFeedbackModal(memberId) {
   const report = day.reports[memberId];
   document.getElementById('modal-feedback-report').innerHTML = report ? `
     <div style="background:var(--gray-50); border-radius:8px; padding:12px; margin-bottom:4px; font-size:13px; color:var(--gray-700); line-height:1.6;">
-      ${report.results ? `<strong>Kết quả:</strong> ${report.results}<br>` : ''}
+      ${report.data_moi != null ? `<strong>Data mới:</strong> ${report.data_moi}/30 &nbsp;` : ''}
+      ${report.khtn != null ? `<strong>KHTN:</strong> ${report.khtn}/15 &nbsp;` : ''}
+      ${report.cho_chot != null ? `<strong>Chờ chốt:</strong> ${report.cho_chot}/5 &nbsp;` : ''}
+      ${report.mua_hang != null ? `<strong>Lên đơn:</strong> ${report.mua_hang}/2` : ''}<br>
       ${report.issues ? `<strong>Khó khăn:</strong> ${report.issues}<br>` : ''}
     </div>` : '';
   openModal('modal-feedback');
@@ -1349,8 +1370,15 @@ function buildSaleTasks() {
   if (!currentUser || currentUser.role === 'manager') return;
   const m = currentUser;
   const now = new Date();
-  const { day } = getTodayData();
-  const tasks = day.tasks[m.id] || [];
+  const { store, key, day } = getTodayData();
+
+  // Auto-init default tasks for today if not done yet
+  if (!day.defaultDone) day.defaultDone = {};
+  if (!day.defaultDone[m.id]) day.defaultDone[m.id] = {};
+  saveTodayData(store, key, day);
+
+  const donemap = day.defaultDone[m.id];
+  const doneCount = DEFAULT_TASKS.filter(t => donemap[t.id]).length;
 
   document.getElementById('sale-hero').innerHTML = `
     <div class="hero-banner">
@@ -1359,38 +1387,49 @@ function buildSaleTasks() {
       <div class="hero-date">${formatDate(now)}</div>
     </div>`;
 
-  if (!tasks.length) {
-    document.getElementById('sale-task-list').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎯</div>
-        <h3>Chưa có việc hôm nay</h3>
-        <p>Leader chưa giao việc. Vui lòng chờ thêm!</p>
-      </div>`;
-    return;
-  }
+  // Extra tasks from manager
+  const extra = day.tasks[m.id] || [];
 
-  const done = tasks.filter(t => t.done).length;
   document.getElementById('sale-task-list').innerHTML = `
     <div class="card" style="padding:14px; margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span class="font-bold text-navy" style="font-size:15px;">Tiến độ: ${done}/${tasks.length}</span>
-        <span class="text-sm text-orange font-bold">${tasks.length ? Math.round(done/tasks.length*100) : 0}%</span>
+        <span class="font-bold text-navy" style="font-size:15px;">Tiến độ: ${doneCount}/${DEFAULT_TASKS.length}</span>
+        <span class="text-sm text-orange font-bold">${Math.round(doneCount/DEFAULT_TASKS.length*100)}%</span>
       </div>
-      <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${tasks.length ? done/tasks.length*100 : 0}%"></div></div>
+      <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${doneCount/DEFAULT_TASKS.length*100}%"></div></div>
     </div>
-    <p class="section-title">Danh sách công việc</p>
-    ${tasks.map((t, idx) => `
-      <div class="task-item" id="task-item-${idx}">
+    <p class="section-title">Công việc hàng ngày</p>
+    ${DEFAULT_TASKS.map(t => `
+      <div class="task-item">
         <div class="task-item-header">
-          <div class="check-box ${t.done ? 'checked' : ''}" onclick="toggleTaskDone('${m.id}', ${idx})"></div>
-          <div class="task-title ${t.done ? 'check-text done' : ''}">${t.title}</div>
+          <div class="check-box ${donemap[t.id] ? 'checked' : ''}" onclick="toggleDefaultTask('${m.id}', ${t.id})"></div>
+          <div class="task-title ${donemap[t.id] ? 'check-text done' : ''}">${t.title}</div>
         </div>
         ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
-        <div class="task-meta">
-          ${priorityPill(t.priority)}
-          ${t.target ? `<span class="pill pill-navy">🎯 ${t.target}</span>` : ''}
-        </div>
-      </div>`).join('')}`;
+      </div>`).join('')}
+    ${extra.length ? `
+      <p class="section-title" style="margin-top:16px;">Việc bổ sung từ Leader</p>
+      ${extra.map((t, idx) => `
+        <div class="task-item">
+          <div class="task-item-header">
+            <div class="check-box ${t.done ? 'checked' : ''}" onclick="toggleTaskDone('${m.id}', ${idx})"></div>
+            <div class="task-title ${t.done ? 'check-text done' : ''}">${t.title}</div>
+          </div>
+          ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
+          <div class="task-meta">
+            ${priorityPill(t.priority)}
+            ${t.target ? `<span class="pill pill-navy">🎯 ${t.target}</span>` : ''}
+          </div>
+        </div>`).join('')}` : ''}`;
+}
+
+function toggleDefaultTask(memberId, taskId) {
+  const { store, key, day } = getTodayData();
+  if (!day.defaultDone) day.defaultDone = {};
+  if (!day.defaultDone[memberId]) day.defaultDone[memberId] = {};
+  day.defaultDone[memberId][taskId] = !day.defaultDone[memberId][taskId];
+  saveTodayData(store, key, day);
+  buildSaleTasks();
 }
 
 function toggleTaskDone(memberId, idx) {
@@ -1428,8 +1467,14 @@ function buildSaleReport() {
           <div style="font-size:13px; color:var(--gray-500); margin-top:4px;">Cảm ơn bạn đã hoàn thành báo cáo hôm nay</div>
         </div>
         <hr class="hr">
-        ${existing.results ? `<div class="review-field mb-8"><div class="review-field-label">Kết quả đạt được</div><div class="review-field-value">${existing.results}</div></div>` : ''}
-        ${existing.done_tasks ? `<div class="review-field mb-8"><div class="review-field-label">Hoàn thành</div><div class="review-field-value">${existing.done_tasks}</div></div>` : ''}
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+          ${[
+            {id:'data_moi', label:'Data mới (PH)', target:30, color:'#1a2b4a'},
+            {id:'khtn',     label:'KHTN',          target:15, color:'#2a6a3f'},
+            {id:'cho_chot', label:'KH chờ chốt',   target:5,  color:'#d97706'},
+            {id:'mua_hang', label:'Lên đơn',        target:2,  color:'#dc2626'},
+          ].map(k => existing[k.id] != null ? `<div style="background:var(--gray-50);border-radius:8px;padding:10px;border-left:3px solid ${k.color}"><div style="font-size:11px;color:var(--gray-500)">${k.label}</div><div style="font-size:22px;font-weight:800;color:${k.color}">${existing[k.id]}<span style="font-size:12px;color:var(--gray-400)">/${k.target}</span></div></div>` : '').join('')}
+        </div>
         ${existing.issues ? `<div class="review-field mb-8"><div class="review-field-label">Khó khăn</div><div class="review-field-value">${existing.issues}</div></div>` : ''}
         ${existing.tomorrow ? `<div class="review-field mb-8"><div class="review-field-label">Ngày mai</div><div class="review-field-value">${existing.tomorrow}</div></div>` : ''}
         ${feedback ? `
@@ -1442,34 +1487,33 @@ function buildSaleReport() {
     return;
   }
 
-  const { day: d2 } = getTodayData();
-  const tasks = d2.tasks[m.id] || [];
-  const doneTasks = tasks.filter(t => t.done).map(t => t.title).join(', ');
+  const KPI_TARGETS = [
+    { id: 'data_moi',   label: 'Data tiếp cận mới (có phản hồi)',         target: 30, color: '#1a2b4a' },
+    { id: 'khtn',       label: 'KH quan tâm SP, đang trao đổi (KHTN)',    target: 15, color: '#2a6a3f' },
+    { id: 'cho_chot',   label: 'KH chờ chốt (hẹn mua / lên kho)',         target: 5,  color: '#d97706' },
+    { id: 'mua_hang',   label: 'Mua hàng mới – lên đơn',                  target: 2,  color: '#dc2626' },
+  ];
 
   document.getElementById('sale-report-content').innerHTML = `
-    <div class="report-section">
-      <div class="report-section-title">📊 Kết quả đạt được</div>
-      <div class="form-group">
-        <textarea class="form-textarea" id="rpt-results" placeholder="VD: Gọi được 18/20 khách, chốt được 2 hợp đồng..." style="min-height:80px;">${existing?.results || ''}</textarea>
-      </div>
+    <p class="section-title">Kết quả KPI hôm nay</p>
+    ${KPI_TARGETS.map(k => `
+      <div class="report-section" style="border-left:4px solid ${k.color}; padding-left:12px;">
+        <div class="report-section-title" style="color:${k.color}; font-size:13px;">${k.label}</div>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:6px;">
+          <input class="form-input" type="number" min="0" id="rpt-${k.id}"
+            value="${existing?.[k.id] ?? ''}"
+            placeholder="Nhập số thực đạt"
+            style="width:120px; font-size:18px; font-weight:700; text-align:center;" />
+          <span style="font-size:13px; color:var(--gray-500);">/ Mục tiêu: <strong>${k.target}</strong></span>
+        </div>
+      </div>`).join('')}
+    <div class="report-section" style="margin-top:4px;">
+      <div class="report-section-title">Khó khăn / Vấn đề phát sinh</div>
+      <textarea class="form-textarea" id="rpt-issues" placeholder="Gặp khó khăn gì? Cần hỗ trợ gì?" style="min-height:70px;">${existing?.issues || ''}</textarea>
     </div>
     <div class="report-section">
-      <div class="report-section-title">✅ Công việc đã hoàn thành</div>
-      <div class="form-group">
-        <textarea class="form-textarea" id="rpt-done" placeholder="Liệt kê các việc đã xong..." style="min-height:70px;">${existing?.done_tasks || doneTasks}</textarea>
-      </div>
-    </div>
-    <div class="report-section">
-      <div class="report-section-title">⚠️ Khó khăn / Vấn đề phát sinh</div>
-      <div class="form-group">
-        <textarea class="form-textarea" id="rpt-issues" placeholder="Gặp khó khăn gì? Cần hỗ trợ gì?" style="min-height:70px;">${existing?.issues || ''}</textarea>
-      </div>
-    </div>
-    <div class="report-section">
-      <div class="report-section-title">📅 Kế hoạch ngày mai</div>
-      <div class="form-group">
-        <textarea class="form-textarea" id="rpt-tomorrow" placeholder="Dự định làm gì ngày mai?" style="min-height:70px;">${existing?.tomorrow || ''}</textarea>
-      </div>
+      <div class="report-section-title">Kế hoạch ngày mai</div>
+      <textarea class="form-textarea" id="rpt-tomorrow" placeholder="Dự định làm gì ngày mai?" style="min-height:70px;">${existing?.tomorrow || ''}</textarea>
     </div>
     <button class="btn btn-primary btn-full mt-4" onclick="submitReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1485,18 +1529,27 @@ function editReport() {
 }
 
 function submitReport() {
-  const results = document.getElementById('rpt-results')?.value.trim();
-  const done_tasks = document.getElementById('rpt-done')?.value.trim();
-  const issues = document.getElementById('rpt-issues')?.value.trim();
-  const tomorrow = document.getElementById('rpt-tomorrow')?.value.trim();
+  const data_moi  = document.getElementById('rpt-data_moi')?.value;
+  const khtn      = document.getElementById('rpt-khtn')?.value;
+  const cho_chot  = document.getElementById('rpt-cho_chot')?.value;
+  const mua_hang  = document.getElementById('rpt-mua_hang')?.value;
+  const issues    = document.getElementById('rpt-issues')?.value.trim();
+  const tomorrow  = document.getElementById('rpt-tomorrow')?.value.trim();
 
-  if (!results && !done_tasks) {
-    toast('Vui lòng nhập kết quả hoặc công việc đã hoàn thành', 'error');
+  if (data_moi === '' && khtn === '' && mua_hang === '') {
+    toast('Vui lòng nhập ít nhất 1 chỉ số KPI', 'error');
     return;
   }
 
   const { store, key, day } = getTodayData();
-  day.reports[currentUser.id] = { results, done_tasks, issues, tomorrow, submittedAt: new Date().toISOString() };
+  day.reports[currentUser.id] = {
+    data_moi: data_moi !== '' ? Number(data_moi) : null,
+    khtn:     khtn !== ''     ? Number(khtn)     : null,
+    cho_chot: cho_chot !== '' ? Number(cho_chot) : null,
+    mua_hang: mua_hang !== '' ? Number(mua_hang) : null,
+    issues, tomorrow,
+    submittedAt: new Date().toISOString()
+  };
   saveTodayData(store, key, day);
   buildSaleReport();
   toast('Đã nộp báo cáo thành công!', 'success');
