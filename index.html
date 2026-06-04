@@ -1293,6 +1293,13 @@ function renderReviewList() {
             ].map(k => report[k.id] != null ? `<div style="background:var(--gray-50);border-radius:8px;padding:8px;border-left:3px solid ${k.color}"><div style="font-size:10px;color:var(--gray-500)">${k.label}</div><div style="font-size:20px;font-weight:800;color:${k.color}">${report[k.id]}<span style="font-size:11px;color:var(--gray-400)">/${k.target}</span></div></div>` : '').join('')}
           </div>
           ${report.issues ? `<div class="review-field"><div class="review-field-label">Khó khăn / vấn đề</div><div class="review-field-value">${report.issues}</div></div>` : ''}
+          ${(report.kh_roi_bo != null || report.kh_roi_bo_action || report.hang_ton) ? `
+            <div style="background:#faf5ff;border-radius:8px;padding:10px;border-left:3px solid #7e22ce;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:700;color:#7e22ce;margin-bottom:4px;">🔄 KH rời bỏ & Hàng tồn</div>
+              ${report.kh_roi_bo != null ? `<div style="font-size:13px;margin-bottom:3px;">Rà lại <strong style="color:#7e22ce">${report.kh_roi_bo}</strong> KH rời bỏ</div>` : ''}
+              ${report.kh_roi_bo_action ? `<div style="font-size:12px;color:var(--gray-600);margin-bottom:3px;">${report.kh_roi_bo_action}</div>` : ''}
+              ${report.hang_ton ? `<div style="font-size:12px;color:var(--gray-600);border-top:1px solid #e9d5ff;padding-top:5px;margin-top:3px;">${report.hang_ton}</div>` : ''}
+            </div>` : ''}
           ${report.tamsự ? `<div class="review-field" style="background:#fff8f0;border-radius:8px;padding:10px;border-left:3px solid var(--orange);"><div class="review-field-label" style="color:var(--orange);">💬 Tâm sự</div><div class="review-field-value" style="white-space:pre-wrap;">${report.tamsự}</div></div>` : ''}
           ${report.dexuat ? `<div class="review-field" style="background:#f0fdf4;border-radius:8px;padding:10px;border-left:3px solid #16a34a;"><div class="review-field-label" style="color:#16a34a;">💡 Đề xuất</div><div class="review-field-value" style="white-space:pre-wrap;">${report.dexuat}</div></div>` : ''}
           ${feedback ? `<div class="feedback-box"><div class="feedback-box-label">Nhận xét Leader</div><div style="font-size:14px; color:var(--navy);">${feedback}</div></div>` : ''}
@@ -1640,6 +1647,13 @@ function buildSaleReport() {
               </div>` : '').join('')}
           </div>
           ${existing.revenue != null ? `<div style="background:#f5f3ff;border-radius:10px;padding:10px 12px;margin-bottom:8px;"><span style="font-size:12px;color:#7c3aed;">Doanh số hôm nay</span><div style="font-size:20px;font-weight:800;color:#7c3aed;">${existing.revenue.toLocaleString('vi-VN')}đ</div></div>` : ''}
+          ${(existing.kh_roi_bo != null || existing.kh_roi_bo_action || existing.hang_ton) ? `
+            <div style="background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid #7e22ce;">
+              <div style="font-size:11px;font-weight:700;color:#7e22ce;margin-bottom:6px;">🔄 KH rời bỏ & Hàng tồn</div>
+              ${existing.kh_roi_bo != null ? `<div style="font-size:13px;margin-bottom:4px;">Rà lại <strong style="color:#7e22ce">${existing.kh_roi_bo}</strong> KH rời bỏ</div>` : ''}
+              ${existing.kh_roi_bo_action ? `<div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">${existing.kh_roi_bo_action}</div>` : ''}
+              ${existing.hang_ton ? `<div style="font-size:12px;color:var(--gray-600);border-top:1px solid #e9d5ff;padding-top:6px;margin-top:4px;">${existing.hang_ton}</div>` : ''}
+            </div>` : ''}
           ${existing.tamsự ? `<div class="review-field mb-8"><div class="review-field-label">💬 Tâm sự</div><div class="review-field-value" style="white-space:pre-wrap;">${existing.tamsự}</div></div>` : ''}
           ${existing.dexuat ? `<div class="review-field mb-8"><div class="review-field-label">💡 Đề xuất</div><div class="review-field-value" style="white-space:pre-wrap;">${existing.dexuat}</div></div>` : ''}
           ${feedback ? `
@@ -1677,6 +1691,30 @@ function buildSaleReport() {
           value="${existing?.revenue ?? ''}"
           placeholder="Nhập doanh số..."
           style="width:100%; border:2px solid #7c3aed40; border-radius:8px; padding:10px; font-size:18px; font-weight:700; color:#7c3aed; background:#7c3aed08; outline:none;" />
+      </div>
+      <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid #7e22ce20; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:700; color:#7e22ce; margin-bottom:2px;">🔄 KH rời bỏ & Hàng tồn</div>
+        <div style="font-size:11px; color:var(--gray-400); margin-bottom:12px;">Doanh số không chỉ đến từ KH mới — hãy suy nghĩ về KH cũ và hàng tồn mỗi ngày.</div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:700; color:#7e22ce; display:block; margin-bottom:6px;">Hôm nay bạn đã rà lại bao nhiêu KH rời bỏ?</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="number" min="0" id="rpt-kh_roi_bo"
+              value="${existing?.kh_roi_bo ?? ''}"
+              placeholder="0"
+              style="width:90px; border:2px solid #7e22ce40; border-radius:8px; padding:8px; font-size:22px; font-weight:800; color:#7e22ce; text-align:center; background:#7e22ce08; outline:none;" />
+            <span style="font-size:12px; color:var(--gray-400);">khách hàng</span>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:700; color:#7e22ce; display:block; margin-bottom:6px;">Bạn đã làm gì với những KH rời bỏ đó?</label>
+          <textarea id="rpt-kh_roi_bo_action" placeholder="VD: Gọi lại 3 KH, nhắn tin zalo 2 KH hỏi thăm, offer giá ưu đãi..."
+            style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:13px; min-height:70px; resize:vertical; outline:none; font-family:inherit;">${existing?.kh_roi_bo_action || ''}</textarea>
+        </div>
+        <div style="border-top:1px solid var(--gray-100); padding-top:12px;">
+          <label style="font-size:12px; font-weight:700; color:#7e22ce; display:block; margin-bottom:6px;">Hôm nay bạn đã nghĩ đến hàng tồn chưa? Đã làm gì?</label>
+          <textarea id="rpt-hang_ton" placeholder="VD: Đã list 5 sản phẩm tồn kho lâu, chào giá ưu đãi cho 3 KH quan tâm, đăng bài clearance sale..."
+            style="width:100%; border:1.5px solid var(--gray-200); border-radius:8px; padding:10px; font-size:13px; min-height:70px; resize:vertical; outline:none; font-family:inherit;">${existing?.hang_ton || ''}</textarea>
+        </div>
       </div>
       <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid var(--orange)20; margin-bottom:12px;">
         <div style="font-size:13px; font-weight:700; color:var(--orange); margin-bottom:4px;">💬 Tâm sự hôm nay</div>
@@ -1719,15 +1757,19 @@ function submitReport() {
 
   const { store, key, day } = getTodayData();
   const revenue = document.getElementById('rpt-revenue')?.value;
-  const tamsự  = document.getElementById('rpt-tamsự')?.value.trim();
-  const dexuat  = document.getElementById('rpt-dexuat')?.value.trim();
+  const tamsự          = document.getElementById('rpt-tamsự')?.value.trim();
+  const dexuat          = document.getElementById('rpt-dexuat')?.value.trim();
+  const kh_roi_bo_val   = document.getElementById('rpt-kh_roi_bo')?.value;
+  const kh_roi_bo_action= document.getElementById('rpt-kh_roi_bo_action')?.value.trim();
+  const hang_ton        = document.getElementById('rpt-hang_ton')?.value.trim();
   day.reports[currentUser.id] = {
     data_moi: data_moi !== '' ? Number(data_moi) : null,
     khtn:     khtn !== ''     ? Number(khtn)     : null,
     cho_chot: cho_chot !== '' ? Number(cho_chot) : null,
     mua_hang: mua_hang !== '' ? Number(mua_hang) : null,
     revenue:  revenue !== ''  ? Number(revenue)  : null,
-    issues, tomorrow, tamsự, dexuat,
+    kh_roi_bo: kh_roi_bo_val !== '' ? Number(kh_roi_bo_val) : null,
+    kh_roi_bo_action, hang_ton, issues, tomorrow, tamsự, dexuat,
     submittedAt: new Date().toISOString()
   };
   saveTodayData(store, key, day);
