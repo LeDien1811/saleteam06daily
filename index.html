@@ -1630,6 +1630,107 @@ function saveFeedback() {
 // MANAGER: SETTINGS
 // ─────────────────────────────────────────
 // ── MEMBER MANAGEMENT ──
+function renderMemberRow(m, phoneMap, tgCfg) {
+  const phone = phoneMap[m.id] || '';
+  const tgId = tgCfg?.chatIds?.[m.id] || '';
+  return `
+    <div id="mrow-${m.id}" style="border:1.5px solid rgba(99,102,241,0.10);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,0.8);">
+      <div id="mrow-view-${m.id}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div class="avatar" style="background:${m.color};width:42px;height:42px;font-size:14px;">${initials(m.name)}</div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:800;color:var(--primary-dark);">${m.name}</div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:.3px;">NHÂN VIÊN KINH DOANH</div>
+          </div>
+          <button onclick="toggleMemberEdit('${m.id}')" style="background:rgba(99,102,241,0.1);border:none;border-radius:10px;padding:7px 12px;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;">✏️ Sửa</button>
+          <button onclick="removeMember('${m.id}')" style="background:rgba(244,63,94,0.1);border:none;border-radius:10px;padding:7px 12px;color:#be123c;font-size:13px;font-weight:700;cursor:pointer;">🗑</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:rgba(99,102,241,0.05);border-radius:10px;padding:8px 10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--primary-light);margin-bottom:2px;">📱 SĐT ĐĂNG NHẬP</div>
+            <div style="font-size:13px;font-weight:700;color:${phone ? 'var(--gray-900)' : '#f43f5e'}">${phone || 'Chưa có'}</div>
+          </div>
+          <div style="background:rgba(6,182,212,0.05);border-radius:10px;padding:8px 10px;">
+            <div style="font-size:10px;font-weight:700;color:#0891b2;margin-bottom:2px;">✈️ TELEGRAM ID</div>
+            <div style="font-size:13px;font-weight:700;color:${tgId ? 'var(--gray-900)' : '#94a3b8'}">${tgId || 'Chưa có'}</div>
+          </div>
+        </div>
+      </div>
+      <div id="mrow-edit-${m.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(99,102,241,0.1);">
+        <div style="display:grid;gap:10px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">TÊN</div>
+            <input class="form-input" id="medit-name-${m.id}" value="${m.name}" placeholder="Tên thành viên" style="font-size:14px;" />
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">VAI TRÒ</div>
+            <select class="form-select" id="medit-role-${m.id}" style="font-size:14px;">
+              <option value="sale" selected>Nhân viên kinh doanh</option>
+              <option value="manager">Leader / Quản lý</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">📱 SỐ ĐIỆN THOẠI ĐĂNG NHẬP</div>
+            <input class="form-input" type="tel" id="medit-phone-${m.id}" value="${phone}" placeholder="VD: 0912345678" style="font-size:14px;" />
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#0891b2;margin-bottom:4px;">✈️ TELEGRAM CHAT ID</div>
+            <input class="form-input" type="text" id="medit-tg-${m.id}" value="${tgId}" placeholder="VD: 123456789" style="font-size:14px;" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="saveMemberEdit('${m.id}')">💾 Lưu</button>
+          <button class="btn btn-ghost" style="flex:1;" onclick="toggleMemberEdit('${m.id}')">Huỷ</button>
+        </div>
+      </div>
+    </div>`;
+}
+function toggleMemberEdit(id) {
+  const view = document.getElementById('mrow-view-' + id);
+  const edit = document.getElementById('mrow-edit-' + id);
+  if (!view || !edit) return;
+  const isEditing = edit.style.display !== 'none';
+  view.style.display = isEditing ? '' : 'none';
+  edit.style.display = isEditing ? 'none' : '';
+}
+function saveMemberEdit(id) {
+  const name = document.getElementById('medit-name-' + id)?.value.trim();
+  const phone = document.getElementById('medit-phone-' + id)?.value.trim();
+  const tgId = document.getElementById('medit-tg-' + id)?.value.trim();
+  if (!name) return toast('Tên không được để trống', 'error');
+
+  // Save name
+  const arr = getMembersStore().map(x => x.id === id ? { ...x, name } : x);
+  saveMembersStore(arr);
+
+  // Save phone
+  const phoneMap = getPhoneMap();
+  phoneMap[id] = phone;
+  savePhoneMap(phoneMap);
+
+  // Save tg chat id
+  const tgCfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
+  if (!tgCfg.chatIds) tgCfg.chatIds = {};
+  tgCfg.chatIds[id] = tgId;
+  localStorage.setItem('dsm_tg', JSON.stringify(tgCfg));
+
+  buildManagerSettings();
+  toast('Đã lưu thông tin ' + name, 'success');
+}
+function openLeaderPhoneEdit() {
+  const phoneMap = getPhoneMap();
+  const newPhone = prompt('SĐT đăng nhập của Leader (Diên Lê):', phoneMap.manager || '');
+  if (newPhone === null) return;
+  phoneMap.manager = newPhone.trim();
+  savePhoneMap(phoneMap);
+  buildManagerSettings();
+  toast('Đã lưu SĐT Leader', 'success');
+}
+function openAddMemberModal() {
+  const name = prompt('Tên thành viên mới:');
+  if (!name || !name.trim()) return;
+  addMember(name.trim());
+}
 function addMember(name) {
   name = name.trim();
   if (!name) return toast('Vui lòng nhập tên thành viên', 'error');
@@ -1663,38 +1764,27 @@ function buildManagerSettings() {
 
   // ── Member management card ──
   const phoneMap = getPhoneMap();
+  const tgCfg = JSON.parse(localStorage.getItem('dsm_tg') || '{}');
   document.getElementById('member-mgmt-card').innerHTML = `
-    <div class="card-header">
-      <div class="card-title">👥 Danh sách sale (${MEMBERS.length} người)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="card-title">👥 Thành viên (${MEMBERS.length} người)</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddMemberModal()" style="gap:4px;">➕ Thêm mới</button>
     </div>
-    <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">Nhập SĐT để thành viên đăng nhập bằng số điện thoại.</div>
 
-    <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:2px solid rgba(99,102,241,0.12);">
-      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px;">📱 SĐT của Leader (bạn)</div>
-      <input class="form-input" type="tel" id="phone-manager" placeholder="Số điện thoại của bạn" value="${phoneMap.manager||''}" style="font-size:14px;" />
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.07),rgba(168,85,247,0.07));border-radius:12px;padding:12px;margin-bottom:14px;border:1px solid rgba(99,102,241,0.15);">
+      <div style="font-size:11px;font-weight:800;color:var(--primary);margin-bottom:6px;letter-spacing:.5px;">LEADER</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--primary),var(--purple));">DL</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:800;color:var(--primary-dark);">Diên Lê</div>
+          <div style="font-size:12px;color:var(--gray-500);">📱 ${phoneMap.manager ? phoneMap.manager : '<span style="color:#f43f5e">Chưa có SĐT</span>'}</div>
+        </div>
+        <button onclick="openLeaderPhoneEdit()" class="btn btn-ghost btn-sm" style="font-size:12px;">✏️ Sửa SĐT</button>
+      </div>
     </div>
 
     <div id="member-list-rows">
-      ${MEMBERS.map(m => `
-        <div style="padding:12px 0;border-bottom:1px solid rgba(99,102,241,0.08);">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <div class="avatar avatar-sm" style="background:${m.color};flex-shrink:0;">${initials(m.name)}</div>
-            <div style="flex:1;font-size:14px;font-weight:800;color:var(--primary-dark);">${m.name}</div>
-            <button class="btn btn-ghost btn-sm" onclick="renameMember('${m.id}')" style="padding:5px 10px;font-size:12px;">✏️</button>
-            <button onclick="removeMember('${m.id}')" style="background:rgba(244,63,94,0.1);border:none;border-radius:8px;padding:6px 10px;color:#be123c;font-size:12px;font-weight:700;cursor:pointer;">🗑</button>
-          </div>
-          <input class="form-input" type="tel" id="phone-${m.id}" placeholder="SĐT đăng nhập của ${m.name}" value="${phoneMap[m.id]||''}" style="font-size:14px;" />
-        </div>`).join('')}
-    </div>
-
-    <button class="btn btn-primary btn-full" onclick="saveMemberPhones()" style="margin-top:14px;margin-bottom:14px;">💾 Lưu số điện thoại</button>
-
-    <div style="border-top:1.5px dashed rgba(99,102,241,0.15);padding-top:14px;">
-      <div style="font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:8px;">THÊM THÀNH VIÊN MỚI</div>
-      <div style="display:flex;gap:8px;">
-        <input id="new-member-name" class="form-input" placeholder="Tên thành viên mới..." style="flex:1;" onkeydown="if(event.key==='Enter'){addMember(this.value);this.value=''}" />
-        <button class="btn btn-primary" onclick="addMember(document.getElementById('new-member-name').value);document.getElementById('new-member-name').value=''">+ Thêm</button>
-      </div>
+      ${MEMBERS.map(m => renderMemberRow(m, phoneMap, tgCfg)).join('')}
     </div>`;
 
   document.getElementById('tg-token').value = cfg.token || '';
@@ -1702,18 +1792,8 @@ function buildManagerSettings() {
 
   // Phone settings now inside member-mgmt-card above
 
-  // chat id fields
-  document.getElementById('tg-chat-ids').innerHTML = `
-    <div class="form-group" style="margin-bottom:0">
-      ${MEMBERS.map(m => `
-        <div class="form-group" style="margin-bottom:10px;">
-          <label class="form-label">
-            <span class="avatar avatar-sm" style="background:${m.color}; display:inline-flex; vertical-align:middle; margin-right:6px; width:22px; height:22px; font-size:10px;">${initials(m.name)}</span>
-            ${m.name}
-          </label>
-          <input class="form-input" type="text" id="tg-id-${m.id}" placeholder="Chat ID Telegram" value="${cfg.chatIds?.[m.id] || ''}" />
-        </div>`).join('')}
-    </div>`;
+  // chat id fields now inside member edit modal
+  document.getElementById('tg-chat-ids').innerHTML = `<p style="font-size:12px;color:var(--gray-500);">Chat ID Telegram được quản lý trong từng thành viên ở trên.</p>`;
 
   // auto schedule checks
   const auto = JSON.parse(localStorage.getItem('dsm_auto') || '{}');
