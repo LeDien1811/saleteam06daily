@@ -1982,6 +1982,20 @@ const GOAL_KPI_DEFS = [
   { id:'mua_hang', label:'Mua hàng mới – lên đơn',          color:'#dc2626', suggest:2  },
 ];
 
+function getSaleMonthlyKPI(memberId) {
+  const store = getStore();
+  const mk = monthKey();
+  const result = {};
+  GOAL_KPI_DEFS.forEach(k => result[k.id] = 0);
+  Object.keys(store).forEach(dk => {
+    if (dk.startsWith(mk)) {
+      const r = store[dk]?.reports?.[memberId];
+      if (r) GOAL_KPI_DEFS.forEach(k => { if (r[k.id] != null) result[k.id] += r[k.id]; });
+    }
+  });
+  return result;
+}
+
 function buildSaleGoals() {
   if (!currentUser || currentUser.role === 'manager') return;
   const m = currentUser;
@@ -1991,92 +2005,132 @@ function buildSaleGoals() {
   const goal = getMemberGoal(m.id, mk);
   const revMap = getMonthRevenue(m.id);
   const totalRev = Object.values(revMap).reduce((a,b)=>a+b,0);
+  const kpiActual = getSaleMonthlyKPI(m.id);
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const todayDate = now.getDate();
 
-  const statusHtml = !goal ? '' : {
-    pending:  '<span class="goal-status-badge goal-status-pending">⏳ Chờ Leader duyệt</span>',
-    approved: '<span class="goal-status-badge goal-status-approved">✅ Đã được duyệt</span>',
-    revision: '<span class="goal-status-badge goal-status-revision">✏️ Cần chỉnh sửa</span>',
-  }[goal.status] || '';
+  // ── Status bar ──
+  const statusMap = {
+    pending:  { bg:'#fef9c3', color:'#854d0e', icon:'⏳', text:'Chờ Leader duyệt' },
+    approved: { bg:'#dcfce7', color:'#166534', icon:'✅', text:'Đã được duyệt' },
+    revision: { bg:'#fee2e2', color:'#991b1b', icon:'✏️', text:'Cần chỉnh sửa' },
+  };
+  const st = goal?.status && statusMap[goal.status];
+  const statusBadge = st ? `<div style="display:inline-flex; align-items:center; gap:6px; background:${st.bg}; color:${st.color}; border-radius:20px; padding:5px 12px; font-size:12px; font-weight:700;">${st.icon} ${st.text}</div>` : '';
 
-  const leaderNoteHtml = goal?.leaderNote ? `
-    <div class="feedback-box mt-8">
-      <div class="feedback-box-label">💬 Ghi chú từ Leader</div>
-      <div style="font-size:14px;">${goal.leaderNote}</div>
+  // ── KPI progress cards ──
+  const kpiCards = goal ? GOAL_KPI_DEFS.map(k => {
+    const actual = kpiActual[k.id] || 0;
+    const target = goal[k.id] || 0;
+    const pct = target > 0 ? Math.min(Math.round(actual/target*100), 100) : 0;
+    const color = pct >= 100 ? '#16a34a' : pct >= 60 ? '#d97706' : k.color;
+    return `
+      <div style="background:#fff; border-radius:14px; padding:14px 12px; border:1.5px solid ${color}20; position:relative; overflow:hidden;">
+        <div style="font-size:10px; font-weight:700; color:${color}; letter-spacing:.4px; margin-bottom:6px; text-transform:uppercase;">${k.label}</div>
+        <div style="display:flex; align-items:flex-end; gap:4px; margin-bottom:6px;">
+          <span style="font-size:28px; font-weight:900; color:${color}; line-height:1;">${actual}</span>
+          <span style="font-size:13px; color:var(--gray-400); margin-bottom:3px;">/ ${target || '—'}</span>
+        </div>
+        <div style="height:5px; background:#f1f5f9; border-radius:99px; overflow:hidden;">
+          <div style="height:100%; width:${pct}%; background:${color}; border-radius:99px; transition:width .4s;"></div>
+        </div>
+        <div style="font-size:10px; color:${color}; margin-top:4px; font-weight:600;">${pct}% đạt được</div>
+      </div>`;
+  }).join('') : `<div style="grid-column:1/-1; text-align:center; padding:16px; color:var(--gray-400); font-size:13px;">Chưa đặt mục tiêu tháng này</div>`;
+
+  // ── Revenue progress bar ──
+  const revTarget = goal?.revenue_target || 0;
+  const revPct = revTarget > 0 ? Math.min(Math.round(totalRev/revTarget*100), 100) : 0;
+  const revColor = revPct >= 100 ? '#16a34a' : revPct >= 60 ? '#d97706' : '#7c3aed';
+  const revenueCard = revTarget ? `
+    <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe); border-radius:16px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#7c3aed; letter-spacing:.4px; margin-bottom:2px;">DOANH SỐ THÁNG</div>
+          <div style="font-size:28px; font-weight:900; color:#4c1d95; line-height:1;">${totalRev.toLocaleString('vi-VN')}đ</div>
+          <div style="font-size:12px; color:#7c3aed; margin-top:2px;">/ Mục tiêu ${revTarget.toLocaleString('vi-VN')}đ</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:32px; font-weight:900; color:${revColor};">${revPct}%</div>
+          <div style="font-size:11px; color:var(--gray-400);">Ngày ${todayDate}/${daysInMonth}</div>
+        </div>
+      </div>
+      <div style="height:8px; background:#ddd6fe; border-radius:99px; overflow:hidden; margin-bottom:6px;">
+        <div style="height:100%; width:${revPct}%; background:${revColor}; border-radius:99px;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c3aed;">
+        <span>Dự báo cuối tháng: <b>${Math.round(totalRev/Math.max(todayDate,1)*daysInMonth).toLocaleString('vi-VN')}đ</b></span>
+        <span>Còn ${daysInMonth-todayDate} ngày</span>
+      </div>
     </div>` : '';
 
+  // ── Goal form (collapsed when approved) ──
   const isLocked = goal?.status === 'approved';
-
-  // Big KPI snapshot (shown when approved)
-  const kpiSnapshotHtml = (goal && goal.status === 'approved') ? `
-    <div style="margin-bottom:4px;">
-      <p class="section-title">Mục tiêu tháng của bạn</p>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-        ${GOAL_KPI_DEFS.map(k => goal[k.id] != null ? `
-          <div style="background:#fff; border-radius:12px; padding:14px; border:2px solid ${k.color}30; text-align:center;">
-            <div style="font-size:10px; font-weight:700; color:${k.color}; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">${k.label}</div>
-            <div style="font-size:36px; font-weight:900; color:${k.color}; line-height:1;">${goal[k.id]}</div>
-            <div style="font-size:10px; color:var(--gray-400); margin-top:2px;">/tháng</div>
-          </div>` : '').join('')}
+  const formContent = `
+    <div id="goal-form-wrap" style="${isLocked ? 'display:none;' : ''}">
+      <div style="background:#fff; border-radius:16px; padding:16px; margin-bottom:12px; border:1.5px solid #e2e8f0;">
+        ${GOAL_KPI_DEFS.map(k => `
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+            <label style="font-size:13px; font-weight:600; color:${k.color};">${k.label}</label>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input class="form-input" type="number" min="0" id="goal-${k.id}"
+                value="${goal?.[k.id] ?? ''}" placeholder="${k.suggest}"
+                style="width:80px; font-size:16px; font-weight:700; text-align:center; padding:6px;" />
+              <span style="font-size:11px; color:var(--gray-400);">/tháng</span>
+            </div>
+          </div>`).join('')}
+        <div style="padding:10px 0; border-bottom:1px solid #f1f5f9;">
+          <label style="font-size:13px; font-weight:600; color:#7c3aed; display:block; margin-bottom:6px;">💰 Doanh số mục tiêu</label>
+          <input class="form-input" type="number" min="0" id="goal-revenue"
+            value="${goal?.revenue_target ?? ''}" placeholder="VD: 50000000"
+            style="font-size:15px; font-weight:700;" />
+        </div>
+        <div style="padding:10px 0;">
+          <label style="font-size:13px; font-weight:600; color:var(--gray-600); display:block; margin-bottom:6px;">Cam kết</label>
+          <textarea class="form-textarea" id="goal-notes" placeholder="Tôi cam kết..." style="min-height:70px;">${goal?.notes || ''}</textarea>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="submitGoal()" style="margin-top:4px;">
+          ${goal ? 'Cập nhật & Gửi lại' : 'Gửi mục tiêu cho Leader'}
+        </button>
       </div>
-      ${goal.revenue_target ? `
-        <div style="background:#fff; border-radius:12px; padding:14px; border:2px solid #7c3aed30; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div style="font-size:13px; font-weight:700; color:#7c3aed;">💰 Doanh số mục tiêu tháng</div>
-          <div style="font-size:22px; font-weight:900; color:#7c3aed;">${goal.revenue_target.toLocaleString('vi-VN')}đ</div>
-        </div>` : ''}
+    </div>
+    ${isLocked ? `<button onclick="document.getElementById('goal-form-wrap').style.display='block';this.style.display='none';"
+      style="width:100%; padding:10px; border:1.5px dashed #cbd5e1; border-radius:12px; background:transparent; color:var(--gray-400); font-size:13px; cursor:pointer; margin-bottom:16px;">
+      ✏️ Chỉnh sửa mục tiêu
+    </button>` : ''}`;
+
+  const leaderNote = goal?.leaderNote ? `
+    <div style="background:#fef9c3; border-radius:12px; padding:12px 14px; border-left:3px solid #eab308; margin-bottom:16px;">
+      <div style="font-size:11px; font-weight:700; color:#854d0e; margin-bottom:4px;">💬 PHẢN HỒI TỪ LEADER</div>
+      <div style="font-size:13px; color:#713f12;">${goal.leaderNote}</div>
     </div>` : '';
-
-  const formHtml = `
-    ${kpiSnapshotHtml}
-    <p class="section-title">${goal?.status === 'approved' ? 'Chỉnh sửa mục tiêu' : 'Đặt mục tiêu ' + monthLabel}</p>
-    ${statusHtml ? `<div style="margin-bottom:12px;">${statusHtml}</div>` : ''}
-    ${leaderNoteHtml}
-    <div class="card" style="margin-bottom:12px;">
-      ${GOAL_KPI_DEFS.map(k => `
-        <div style="margin-bottom:14px;">
-          <label class="form-label" style="color:${k.color};">${k.label}</label>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <input class="form-input" type="number" min="0" id="goal-${k.id}"
-              value="${goal?.[k.id] ?? ''}"
-              placeholder="Mục tiêu (gợi ý: ${k.suggest})"
-              ${isLocked ? 'disabled' : ''}
-              style="width:130px; font-size:17px; font-weight:700; text-align:center;" />
-            <span style="font-size:12px; color:var(--gray-400);">gợi ý: ${k.suggest}/tháng</span>
-          </div>
-        </div>`).join('')}
-      <div>
-        <label class="form-label">Mục tiêu doanh số tháng (VND)</label>
-        <input class="form-input" type="number" min="0" id="goal-revenue"
-          value="${goal?.revenue_target ?? ''}"
-          placeholder="VD: 50000000"
-          ${isLocked ? 'disabled' : ''}
-          style="font-size:16px; font-weight:700;" />
-      </div>
-      <div style="margin-top:14px;">
-        <label class="form-label">Cam kết / Ghi chú</label>
-        <textarea class="form-textarea" id="goal-notes" placeholder="Cam kết của bạn với mục tiêu này..." ${isLocked ? 'disabled' : ''}>${goal?.notes || ''}</textarea>
-      </div>
-      ${!isLocked ? `<button class="btn btn-primary btn-full mt-4" onclick="submitGoal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-        ${goal ? 'Cập nhật & Gửi lại' : 'Gửi mục tiêu cho Leader'}
-      </button>` : `<button class="btn btn-ghost btn-full mt-4" onclick="resetGoalForEdit()">Chỉnh sửa mục tiêu</button>`}
-    </div>`;
-
-  const calHtml = buildRevenueCalendar(revMap, now);
 
   document.getElementById('sale-goals-content').innerHTML = `
-    <div class="hero-banner" style="background:linear-gradient(135deg,#3b1f6e,#6d3fc0);">
-      <div class="hero-greeting">Mục tiêu & Doanh số</div>
-      <div class="hero-name">${m.name}</div>
-      <div class="hero-date">${monthLabel}</div>
-    </div>
-    <div style="padding:0 16px 80px;">
-      ${formHtml}
-      <p class="section-title">Nhịp độ doanh số</p>
-      ${buildPaceCard(m.id, now, true)}
-      <p class="section-title">📅 Doanh số từng ngày</p>
-      <div class="card" style="margin-bottom:8px; padding:14px;">
-        ${calHtml}
+    <div style="background:linear-gradient(135deg,#3b1f6e 0%,#6d3fc0 100%); padding:24px 20px 20px; border-radius:0 0 24px 24px; margin-bottom:4px;">
+      <div style="font-size:12px; color:#c4b5fd; font-weight:600; letter-spacing:.5px; margin-bottom:4px;">MỤC TIÊU & DOANH SỐ</div>
+      <div style="font-size:26px; font-weight:900; color:#fff; margin-bottom:4px;">${m.name}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:13px; color:#c4b5fd;">${monthLabel}</div>
+        ${statusBadge}
       </div>
+    </div>
+
+    <div style="padding:16px 16px 80px;">
+      ${leaderNote}
+      ${revenueCard}
+
+      ${goal ? `<div style="font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:.5px; margin-bottom:10px;">TIẾN ĐỘ KPI THÁNG NÀY</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+        ${kpiCards}
+      </div>` : ''}
+
+      <div style="font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:.5px; margin-bottom:10px;">DOANH SỐ TỪNG NGÀY</div>
+      <div style="background:#fff; border-radius:16px; padding:14px; margin-bottom:20px; border:1.5px solid #f1f5f9;">
+        ${buildRevenueCalendar(revMap, now)}
+      </div>
+
+      <div style="font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:.5px; margin-bottom:10px;">${goal?.status === 'approved' ? 'MỤC TIÊU ĐÃ DUYỆT' : 'ĐẶT MỤC TIÊU ' + monthLabel.toUpperCase()}</div>
+      ${formContent}
     </div>`;
 }
 
