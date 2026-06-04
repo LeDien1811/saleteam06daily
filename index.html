@@ -1149,6 +1149,7 @@ function enterApp() {
   document.getElementById('role-badge').style.display = 'inline-flex';
 
   if (currentUser.role === 'manager') {
+    requestNotifPermission();
     document.getElementById('role-badge').textContent = 'Leader';
     document.getElementById('nav-mgr').style.display = 'contents';
     document.getElementById('nav-sale').style.display = 'none';
@@ -1594,16 +1595,48 @@ async function sendTgManual(type) {
   toast(sent > 0 ? `Đã gửi ${sent} tin nhắn` : 'Gửi thất bại – kiểm tra token/chat ID', sent > 0 ? 'success' : 'error');
 }
 
+// Request browser notification permission
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// Send a browser notification
+function sendBrowserNotif(title, body, icon) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = new Notification(title, { body, icon: icon || '/icon-192.png', badge: '/icon-192.png', tag: 'schedule-alert' });
+  setTimeout(() => n.close(), 10000);
+}
+
 // auto schedule check
 function startAutoScheduler() {
   setInterval(() => {
+    const now = new Date();
+    const h = now.getHours(), min = now.getMinutes();
+    const todayStr = todayKey();
+    const lastSent = JSON.parse(sessionStorage.getItem('dsm_auto_sent') || '{}');
+
+    // ── Browser notifications for leader schedule ──
+    if (currentUser?.role === 'manager' && Notification.permission === 'granted') {
+      const allSlots = [
+        ...LEADER_SCHEDULE,
+        ...((JSON.parse(localStorage.getItem('dsm_learn') || '{}')?.[todayStr]) || []),
+      ];
+      allSlots.forEach(slot => {
+        const [sh, sm] = slot.time.split(':').map(Number);
+        const key = `slot_${slot.time}`;
+        if (h === sh && min === sm && lastSent[key] !== todayStr) {
+          sessionStorage.setItem('dsm_auto_sent', JSON.stringify({ ...JSON.parse(sessionStorage.getItem('dsm_auto_sent') || '{}'), [key]: todayStr }));
+          const icon = slot.icon || '🔔';
+          sendBrowserNotif(`${icon} ${slot.time} – Đến giờ rồi!`, slot.label);
+        }
+      });
+    }
+
     const auto = JSON.parse(localStorage.getItem('dsm_auto') || '{}');
     if (!auto.morning && !auto.evening) return;
     if (currentUser?.role !== 'manager') return;
-    const now = new Date();
-    const h = now.getHours(), min = now.getMinutes();
-    const lastSent = JSON.parse(sessionStorage.getItem('dsm_auto_sent') || '{}');
-    const todayStr = todayKey();
     if (auto.morning && h === 8 && min === 30 && lastSent.morning !== todayStr) {
       sessionStorage.setItem('dsm_auto_sent', JSON.stringify({ ...lastSent, morning: todayStr }));
       sendTgManual('morning');
@@ -2311,17 +2344,20 @@ function updateGoalsBadge() {
 // MANAGER: DIARY + SCHEDULE
 // ─────────────────────────────────────────
 const LEADER_SCHEDULE = [
-  { time:'07:30', label:'Xem báo cáo hôm qua, review KPI', color:'#1a2b4a' },
-  { time:'08:00', label:'Chuẩn bị nội dung giao việc sáng', color:'#1a2b4a' },
-  { time:'08:30', label:'Gửi việc buổi sáng cho team (Telegram)', color:'#f57c20' },
-  { time:'09:00', label:'Hỗ trợ & theo dõi team làm việc', color:'#2a6a3f' },
-  { time:'11:30', label:'Check tiến độ buổi sáng từng sale', color:'#2a6a3f' },
-  { time:'13:30', label:'Họp/trao đổi cá nhân (nếu cần)', color:'#7c3aed' },
-  { time:'14:00', label:'Tiếp tục hỗ trợ & giám sát', color:'#2a6a3f' },
-  { time:'17:00', label:'Review tổng kết chiều, check doanh số', color:'#d97706' },
-  { time:'20:00', label:'Xem trước báo cáo nộp về', color:'#dc2626' },
-  { time:'21:30', label:'Nhắc team nộp báo cáo cuối ngày', color:'#f57c20' },
-  { time:'22:00', label:'Viết nhật ký, review ngày hôm nay', color:'#6d3fc0' },
+  { time:'06:00', label:'Thức dậy – Thiền / vận động nhẹ', color:'#0891b2', icon:'🌅' },
+  { time:'06:30', label:'Đọc sách – 30 phút mỗi sáng', color:'#059669', icon:'📖' },
+  { time:'07:30', label:'Xem báo cáo hôm qua, review KPI', color:'#1a2b4a', icon:'📊' },
+  { time:'08:00', label:'Chuẩn bị nội dung giao việc sáng', color:'#1a2b4a', icon:'📝' },
+  { time:'08:30', label:'Gửi việc buổi sáng cho team', color:'#f57c20', icon:'📤' },
+  { time:'09:00', label:'Hỗ trợ & theo dõi team làm việc', color:'#2a6a3f', icon:'👥' },
+  { time:'11:30', label:'Check tiến độ buổi sáng từng sale', color:'#2a6a3f', icon:'✅' },
+  { time:'13:30', label:'Họp/trao đổi cá nhân (nếu cần)', color:'#7c3aed', icon:'💬' },
+  { time:'14:00', label:'Tiếp tục hỗ trợ & giám sát', color:'#2a6a3f', icon:'👁' },
+  { time:'17:00', label:'Review tổng kết chiều, check doanh số', color:'#d97706', icon:'📈' },
+  { time:'20:00', label:'Xem trước báo cáo nộp về', color:'#dc2626', icon:'📋' },
+  { time:'21:00', label:'Đọc sách – 30 phút buổi tối', color:'#059669', icon:'📖' },
+  { time:'21:30', label:'Nhắc team nộp báo cáo cuối ngày', color:'#f57c20', icon:'🔔' },
+  { time:'22:00', label:'Viết nhật ký, review ngày hôm nay', color:'#6d3fc0', icon:'✍️' },
 ];
 
 const LEADER_CHECKLIST = [
@@ -2377,6 +2413,7 @@ function buildMgrDiary() {
         <div style="flex:1;">
           <div style="display:flex; align-items:center; gap:6px;">
             ${isLearn ? `<span style="font-size:10px; background:#e0f2fe; color:#0891b2; padding:1px 6px; border-radius:10px; font-weight:700;">📚 HỌC</span>` : ''}
+            ${s.icon && !isLearn ? `<span style="font-size:14px;">${s.icon}</span>` : ''}
             <span style="font-size:13px; font-weight:${isCurrent?'700':'400'}; color:${isCurrent?s.color:'var(--gray-700)'};">
               ${isCurrent ? '▶ ' : ''}${s.label}
             </span>
