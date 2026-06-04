@@ -1069,7 +1069,7 @@ function findUserByPhone(phone) {
   const cleaned = phone.replace(/\D/g,'');
   for (const [id, p] of Object.entries(map)) {
     if (p && p.replace(/\D/g,'') === cleaned) {
-      if (id === 'manager') return { id:'manager', name:'Leader', role:'manager' };
+      if (id === 'manager') return { id:'manager', name:'Diên Lê', role:'manager' };
       return memberById(id);
     }
   }
@@ -1227,7 +1227,7 @@ function clearLoginError() {
 
 function loginAs(userId) {
   if (userId === 'manager') {
-    currentUser = { id: 'manager', name: 'Quản Lý', role: 'manager' };
+    currentUser = { id: 'manager', name: 'Diên Lê', role: 'manager' };
   } else {
     currentUser = memberById(userId);
   }
@@ -2756,7 +2756,7 @@ function buildMgrDiary() {
   document.getElementById('mgr-diary-content').innerHTML = `
     <div class="hero-banner" style="background:linear-gradient(135deg,#1a2b4a,#3b1f6e);">
       <div class="hero-greeting">Lịch biểu & Nhật ký</div>
-      <div class="hero-name">Leader</div>
+      <div class="hero-name">Diên Lê</div>
       <div class="hero-date">${formatDate(now)} · ${formatTime(now)}</div>
     </div>
     <div style="padding:12px 16px 100px;">
@@ -2922,7 +2922,7 @@ function buildProfile(memberId, viewAs) {
   // viewAs = 'leader' when leader opens a member's profile
   const isLeader = currentUser?.role === 'manager';
   const targetId = memberId || currentUser?.id;
-  const member = targetId === 'manager' ? { id:'manager', name:'Leader', color:'#1a2b4a' } : memberById(targetId);
+  const member = targetId === 'manager' ? { id:'manager', name:'Diên Lê', color:'#4f46e5' } : memberById(targetId);
   if (!member) return;
 
   const profiles = getProfileStore();
