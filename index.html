@@ -2073,8 +2073,8 @@ function buildSaleGoals() {
       ${formHtml}
       <p class="section-title">Nhịp độ doanh số</p>
       ${buildPaceCard(m.id, now, true)}
-      <p class="section-title">Lịch doanh số tháng này</p>
-      <div class="card" style="margin-bottom:8px;">
+      <p class="section-title">📅 Doanh số từng ngày</p>
+      <div class="card" style="margin-bottom:8px; padding:14px;">
         ${calHtml}
       </div>
     </div>`;
@@ -2201,22 +2201,65 @@ function buildTeamPaceCard(now) {
 
 function buildRevenueCalendar(revMap, now) {
   const year = now.getFullYear(), month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const todayDate = now.getDate();
-  const dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
-  let html = `<div class="rev-calendar">`;
-  dayNames.forEach(d => html += `<div class="rev-cal-header">${d}</div>`);
-  for (let i=0; i<firstDay; i++) html += `<div class="rev-cal-day empty"></div>`;
-  for (let d=1; d<=daysInMonth; d++) {
-    const dk = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const rev = revMap[dk];
-    const isToday = d === todayDate;
-    const hasData = rev != null;
-    html += `<div class="rev-cal-day${hasData?' has-data':''}${isToday?' today':''}">
-      <div class="rev-cal-day-num">${d}</div>
-      ${hasData ? `<div class="rev-cal-day-val">${formatRevenue(rev)}</div>` : ''}
+  const dayShort = ['CN','T2','T3','T4','T5','T6','T7'];
+  const total = Object.values(revMap).reduce((a,b)=>a+b,0);
+  const daysWithData = Object.values(revMap).filter(v=>v>0).length;
+  const avg = daysWithData > 0 ? Math.round(total / daysWithData) : 0;
+  const maxRev = Math.max(0, ...Object.values(revMap));
+
+  // Summary header
+  let html = `
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+      <div style="text-align:center; background:#f5f3ff; border-radius:10px; padding:10px 6px;">
+        <div style="font-size:10px; color:#7c3aed; font-weight:700; margin-bottom:3px;">TỔNG THÁNG</div>
+        <div style="font-size:15px; font-weight:900; color:#7c3aed;">${total>0?total.toLocaleString('vi-VN')+'đ':'—'}</div>
+      </div>
+      <div style="text-align:center; background:#f0fdf4; border-radius:10px; padding:10px 6px;">
+        <div style="font-size:10px; color:#16a34a; font-weight:700; margin-bottom:3px;">TB/NGÀY</div>
+        <div style="font-size:15px; font-weight:900; color:#16a34a;">${avg>0?avg.toLocaleString('vi-VN')+'đ':'—'}</div>
+      </div>
+      <div style="text-align:center; background:#fff7ed; border-radius:10px; padding:10px 6px;">
+        <div style="font-size:10px; color:#f57c20; font-weight:700; margin-bottom:3px;">NGÀY CAO NHẤT</div>
+        <div style="font-size:15px; font-weight:900; color:#f57c20;">${maxRev>0?formatRevenue(maxRev):'—'}</div>
+      </div>
     </div>`;
+
+  // Day-by-day list (only days up to today)
+  html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+  let cumulative = 0;
+  for (let d = 1; d <= Math.min(daysInMonth, todayDate); d++) {
+    const dk = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const rev = revMap[dk] ?? null;
+    const isToday = d === todayDate;
+    const dow = new Date(year, month, d).getDay();
+    if (rev != null) cumulative += rev;
+    const barPct = maxRev > 0 && rev != null ? Math.round(rev/maxRev*100) : 0;
+    html += `
+      <div style="display:flex; align-items:center; gap:8px; padding:7px 10px;
+           border-radius:9px; background:${isToday?'#f5f3ff':'#fafafa'};
+           border:1px solid ${isToday?'#7c3aed40':'#f0f0f0'};">
+        <div style="width:32px; text-align:center; flex-shrink:0;">
+          <div style="font-size:11px; font-weight:700; color:${isToday?'#7c3aed':'var(--gray-500)'};">${dayShort[dow]}</div>
+          <div style="font-size:13px; font-weight:900; color:${isToday?'#7c3aed':'var(--gray-700)'};">${d}</div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          ${rev != null ? `
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+              <span style="font-size:14px; font-weight:800; color:${isToday?'#7c3aed':'#1a2b4a'};">${rev.toLocaleString('vi-VN')}đ</span>
+              <span style="font-size:10px; color:var(--gray-400);">Lũy kế: ${cumulative.toLocaleString('vi-VN')}đ</span>
+            </div>
+            <div style="height:4px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+              <div style="height:100%; width:${barPct}%; background:${isToday?'#7c3aed':'#a78bfa'}; border-radius:4px;"></div>
+            </div>` : `
+            <div style="font-size:12px; color:var(--gray-300); font-style:italic;">Chưa có doanh số</div>`}
+        </div>
+      </div>`;
+  }
+  // Remaining days preview
+  if (todayDate < daysInMonth) {
+    html += `<div style="text-align:center; font-size:11px; color:var(--gray-300); padding:6px 0;">${daysInMonth - todayDate} ngày còn lại trong tháng</div>`;
   }
   html += `</div>`;
   return html;
@@ -2275,9 +2318,9 @@ function buildMgrGoals() {
         <details style="margin-bottom:12px;">
           <summary style="font-size:12px; color:var(--gray-400); cursor:pointer; padding:4px 0; list-style:none; display:flex; align-items:center; gap:4px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
-            Xem lịch doanh số
+            📅 Xem doanh số từng ngày
           </summary>
-          <div class="card" style="margin-top:6px; padding:10px;">
+          <div class="card" style="margin-top:6px; padding:14px;">
             ${buildRevenueCalendar(revMap, now)}
           </div>
         </details>
